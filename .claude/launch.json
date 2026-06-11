@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "mundial2026",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "C:\\JuanLlamas\\cursos\\1-Domicilios\\trote\\mundial2026",
+      "port": 5173
+    }
+  ]
+}
