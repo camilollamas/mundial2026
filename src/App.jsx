@@ -16,6 +16,18 @@ const TABS = [
 
 export default function App() {
   const [tab, setTab] = useState('fixture')
+  const [dark, setDark] = useState(
+    () => document.documentElement.dataset.theme === 'dark'
+  )
+
+  useEffect(() => {
+    if (dark) document.documentElement.dataset.theme = 'dark'
+    else delete document.documentElement.dataset.theme
+    localStorage.setItem('m26:theme', dark ? 'dark' : 'light')
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', dark ? '#0d1424' : '#eef1f6')
+  }, [dark])
   const [groupMatches, setGroupMatches] = useState([])
   const [koMatches, setKoMatches] = useState([])
   const [liveData, setLiveData] = useState(false)
@@ -60,20 +72,29 @@ export default function App() {
             <p className="brand-sub">CAN · MEX · USA</p>
           </div>
         </div>
-        <div className="header-status">
-          {anyLive ? (
-            <span className="live-dot">EN VIVO</span>
-          ) : (
-            <span className={`status-pill ${liveData ? 'online' : 'offline'}`}>
-              <span className="status-dot" />
-              {liveData ? 'En línea' : 'Offline'}
-            </span>
-          )}
-          {updatedAt && (
-            <span className="updated">
-              {updatedAt.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}
-            </span>
-          )}
+        <div className="header-right">
+          <div className="header-status">
+            {anyLive ? (
+              <span className="live-dot">EN VIVO</span>
+            ) : (
+              <span className={`status-pill ${liveData ? 'online' : 'offline'}`}>
+                <span className="status-dot" />
+                {liveData ? 'En línea' : 'Offline'}
+              </span>
+            )}
+            {updatedAt && (
+              <span className="updated">
+                {updatedAt.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            )}
+          </div>
+          <button
+            className="theme-btn"
+            onClick={() => setDark(!dark)}
+            aria-label={dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+          >
+            {dark ? '☀️' : '🌙'}
+          </button>
         </div>
       </header>
 

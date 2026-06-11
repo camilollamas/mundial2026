@@ -41,6 +41,35 @@
 
   /* motion */
   --ease: all 0.2s ease;
+
+  --bg-glow-2: #e8ecf7;
+  color-scheme: light;
+}
+
+/* ---------- tema oscuro ---------- */
+[data-theme='dark'] {
+  --bg: #0d1424;
+  --bg-glow: rgba(20, 184, 166, 0.1);
+  --bg-glow-2: #131d33;
+  --surface: #161f33;
+  --surface-2: #1d2941;
+  --surface-glass: rgba(16, 23, 41, 0.75);
+  --border: #243250;
+  --border-strong: #31436a;
+  --text: #e8edf6;
+  --text-secondary: #8da0bf;
+  --primary: #14b8a6;
+  --primary-strong: #2dd4bf;
+  --primary-soft: rgba(20, 184, 166, 0.14);
+  --accent: #38bdf8;
+  --warn: #f5a623;
+  --warn-soft: rgba(245, 166, 35, 0.14);
+  --live: #f43f5e;
+  --live-soft: rgba(244, 63, 94, 0.14);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.25), 0 8px 24px rgba(0, 0, 0, 0.3);
+  --shadow-hover: 0 2px 4px rgba(0, 0, 0, 0.3), 0 14px 34px rgba(0, 0, 0, 0.42);
+  --shadow-bar: 0 -6px 24px rgba(0, 0, 0, 0.35);
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -49,7 +78,7 @@ body {
   margin: 0;
   background:
     radial-gradient(900px 420px at 80% -160px, var(--bg-glow) 0%, transparent 60%),
-    radial-gradient(700px 380px at 0% -120px, #e8ecf7 0%, transparent 55%),
+    radial-gradient(700px 380px at 0% -120px, var(--bg-glow-2) 0%, transparent 55%),
     var(--bg);
   color: var(--text);
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -129,12 +158,38 @@ body {
   white-space: nowrap;
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.theme-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  transition: var(--ease);
+}
+.theme-btn:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-hover);
+}
+
 .header-status {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 4px;
-  flex-shrink: 0;
 }
 .updated {
   font-size: 10px;

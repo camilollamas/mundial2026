@@ -13,6 +13,14 @@
       rel="stylesheet"
     />
     <title>Mundial 2026 · Tracker</title>
+    <script>
+      // aplica el tema antes de pintar para evitar flash claro/oscuro
+      (function () {
+        var saved = localStorage.getItem('m26:theme')
+        var dark = saved ? saved === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches
+        if (dark) document.documentElement.dataset.theme = 'dark'
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>
