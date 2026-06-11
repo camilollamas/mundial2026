@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import { getGroupMatches, getKnockoutMatches, isLive } from './api.js'
+import {
+  getGroupMatches,
+  getKnockoutMatches,
+  getLiveScores,
+  mergeLiveScores,
+  inLiveWindow,
+  isLive,
+} from './api.js'
 import Fixture from './components/Fixture.jsx'
 import Groups from './components/Groups.jsx'
 import Bracket from './components/Bracket.jsx'
@@ -38,11 +45,24 @@ export default function App() {
 
   async function refresh() {
     const { matches, live } = await getGroupMatches()
-    setGroupMatches(matches)
+    let merged = matches
+    let liveScores = null
+    // ventana amplia: los horarios de TheSportsDB a veces difieren de los reales
+    if (inLiveWindow(matches, 8 * 3_600_000, 4 * 3_600_000)) {
+      try {
+        liveScores = await getLiveScores()
+        merged = mergeLiveScores(matches, liveScores)
+      } catch {
+        /* sin marcador en vivo: se mantienen los datos base */
+      }
+    }
+    setGroupMatches(merged)
     setLiveData(live)
     setUpdatedAt(new Date())
     try {
-      setKoMatches(await getKnockoutMatches())
+      let ko = await getKnockoutMatches()
+      if (liveScores) ko = mergeLiveScores(ko, liveScores)
+      setKoMatches(ko)
     } catch {
       /* las eliminatorias aún no existen en la API */
     }
@@ -52,15 +72,16 @@ export default function App() {
     refresh()
   }, [])
 
-  // Auto-actualiza cada 60 s si hay partidos en vivo, cada 5 min si no.
+  // Auto-actualiza cada 30 s en ventana de partido, cada 5 min si no.
   const anyLive = useMemo(
     () => [...groupMatches, ...koMatches].some(isLive),
     [groupMatches, koMatches]
   )
+  const windowActive = anyLive || inLiveWindow(groupMatches) || inLiveWindow(koMatches)
   useEffect(() => {
-    const id = setInterval(refresh, anyLive ? 60_000 : 300_000)
+    const id = setInterval(refresh, windowActive ? 30_000 : 300_000)
     return () => clearInterval(id)
-  }, [anyLive])
+  }, [windowActive])
 
   const allMatches = useMemo(() => [...groupMatches, ...koMatches], [groupMatches, koMatches])
 

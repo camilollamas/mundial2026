@@ -39,10 +39,14 @@ export default function MatchCard({ m, allMatches = [] }) {
             ) : (
               <span className="score time">{kickoff(m)}</span>
             )}
-            {(STATUS_ES[m.status] || (live && m.status)) && (
-              <span className={`status ${live ? 'status-live' : ''}`}>
-                {STATUS_ES[m.status] || m.status}
-              </span>
+            {live && m.clock ? (
+              <span className="status status-live clock">{m.clock}</span>
+            ) : (
+              (STATUS_ES[m.status] || (live && m.status)) && (
+                <span className={`status ${live ? 'status-live' : ''}`}>
+                  {STATUS_ES[m.status] || m.status}
+                </span>
+              )
             )}
           </div>
           <div className="match-team">

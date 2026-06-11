@@ -14,7 +14,7 @@ for (const size of [192, 512]) {
 // maskable: el contenido al 80% centrado sobre el fondo de marca
 const inner = await sharp(svg, { density: 300 }).resize(410, 410).png().toBuffer()
 await sharp({
-  create: { width: 512, height: 512, channels: 4, background: '#0d9488' },
+  create: { width: 512, height: 512, channels: 4, background: '#0d1424' },
 })
   .composite([{ input: inner, gravity: 'center' }])
   .png()
@@ -23,7 +23,7 @@ await sharp({
 // apple-touch-icon (iOS no soporta transparencia: fondo sólido)
 const inner180 = await sharp(svg, { density: 300 }).resize(150, 150).png().toBuffer()
 await sharp({
-  create: { width: 180, height: 180, channels: 4, background: '#0d9488' },
+  create: { width: 180, height: 180, channels: 4, background: '#0d1424' },
 })
   .composite([{ input: inner180, gravity: 'center' }])
   .png()

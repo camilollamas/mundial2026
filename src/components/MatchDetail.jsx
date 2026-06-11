@@ -41,7 +41,11 @@ export default function MatchDetail({ m, allMatches = [], onClose }) {
             ) : (
               <strong>{new Date(m.ts + 'Z').toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}</strong>
             )}
-            <span className="muted small">{group ? `Grupo ${group}` : 'Eliminatoria'}</span>
+            {live && m.clock ? (
+              <span className="status-live small clock">{m.clock}</span>
+            ) : (
+              <span className="muted small">{group ? `Grupo ${group}` : 'Eliminatoria'}</span>
+            )}
           </div>
           <div className="sheet-team">
             <img src={flag(m.away)} alt="" className="badge lg" />

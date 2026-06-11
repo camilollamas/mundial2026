@@ -195,6 +195,61 @@ export async function getArticle(id) {
   }
 }
 
+// --- Marcador en vivo con minuto de juego (scoreboard de ESPN) ---
+// TheSportsDB free actualiza lento y sin reloj; ESPN trae displayClock
+// (ej. "67'") y marcador al instante. Se consulta solo en ventana de partido.
+
+// ESPN agrupa el scoreboard por fecha del Este de EE. UU.
+const espnToday = () =>
+  new Date()
+    .toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
+    .replaceAll('-', '')
+
+export async function getLiveScores() {
+  const sb = await fetchJSON(`${ESPN}/scoreboard?dates=${espnToday()}`, `espnlive`, 25_000)
+  return (sb.events || []).map((e) => {
+    const comp = e.competitions?.[0] || {}
+    const side = (ha) => (comp.competitors || []).find((c) => c.homeAway === ha)
+    const home = side('home')
+    const away = side('away')
+    return {
+      home: normName(home?.team?.displayName),
+      away: normName(away?.team?.displayName),
+      hs: home?.score != null ? Number(home.score) : null,
+      as: away?.score != null ? Number(away.score) : null,
+      state: e.status?.type?.state, // pre | in | post
+      name: e.status?.type?.name || '',
+      clock: e.status?.displayClock || '',
+      period: e.status?.period || 0,
+    }
+  })
+}
+
+// Sobrepone marcador/minuto de ESPN a los partidos de TheSportsDB.
+export function mergeLiveScores(matches, live) {
+  if (!live?.length) return matches
+  const map = new Map(live.map((l) => [`${l.home}|${l.away}`, l]))
+  return matches.map((m) => {
+    const l = map.get(`${espnName(m.home)}|${espnName(m.away)}`)
+    if (!l || l.state === 'pre' || l.hs === null) return m
+    if (l.state === 'post') {
+      return { ...m, hs: l.hs, as: l.as, status: 'FT', clock: '' }
+    }
+    const status = l.name === 'STATUS_HALFTIME' ? 'HT' : l.period <= 1 ? '1H' : l.period === 2 ? '2H' : 'ET'
+    return { ...m, hs: l.hs, as: l.as, status, clock: status === 'HT' ? '' : l.clock }
+  })
+}
+
+// ¿Hay algún partido en ventana de juego? Por defecto 10 min antes → 3 h
+// después; se puede ampliar (los horarios de la fuente base a veces difieren).
+export const inLiveWindow = (matches, pre = 10 * 60_000, post = 3 * 3_600_000) => {
+  const now = Date.now()
+  return matches.some((m) => {
+    const t = new Date(m.ts + 'Z').getTime()
+    return now > t - pre && now < t + post
+  })
+}
+
 export const isFinished = (m) => m.status === 'FT' || m.status === 'AET' || m.status === 'PEN'
 export const isLive = (m) =>
   ['1H', '2H', 'HT', 'ET', 'BT', 'P', 'LIVE'].includes(m.status)
