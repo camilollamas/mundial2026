@@ -69,7 +69,9 @@ export default function App() {
       <header className="header">
         <div className="header-accent" />
         <div className="brand">
-          <span className="brand-ball">⚽</span>
+          <span className="brand-ball" aria-hidden="true">
+            <img src="/icon.svg" alt="" className="brand-ball-icon" />
+          </span>
           <div>
             <h1>FÚTBOL TRACKER <span className="brand-year">M26</span></h1>
             <p className="brand-sub">CAN · MEX · USA</p>
