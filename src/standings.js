@@ -1,5 +1,10 @@
 import { GROUPS, TEAM_GROUP } from './data/groups.js'
-import { isFinished } from './api.js'
+import { isFinished, isLive } from './api.js'
+
+// Cuenta también los partidos en vivo: la tabla se mueve en tiempo real
+// con resultados provisionales mientras ruedan los partidos.
+export const countsForTable = (m) =>
+  m.hs !== null && m.as !== null && (isFinished(m) || isLive(m))
 
 // Calcula la tabla de cada grupo a partir de los resultados (criterio FIFA:
 // puntos, diferencia de gol, goles a favor, enfrentamiento directo simplificado).
@@ -7,12 +12,16 @@ export function computeStandings(matches) {
   const rows = {}
   for (const [group, teams] of Object.entries(GROUPS)) {
     for (const t of teams) {
-      rows[t] = { team: t, group, pj: 0, g: 0, e: 0, p: 0, gf: 0, gc: 0, pts: 0 }
+      rows[t] = { team: t, group, pj: 0, g: 0, e: 0, p: 0, gf: 0, gc: 0, pts: 0, live: false }
     }
   }
 
   for (const m of matches) {
-    if (!isFinished(m) || m.hs === null || m.as === null) continue
+    if (isLive(m) && rows[m.home] && rows[m.away]) {
+      rows[m.home].live = true
+      rows[m.away].live = true
+    }
+    if (!countsForTable(m)) continue
     const h = rows[m.home]
     const a = rows[m.away]
     if (!h || !a) continue
@@ -46,7 +55,7 @@ export function teamStats(matches) {
   const stats = {}
   for (const t of Object.keys(TEAM_GROUP)) stats[t] = { team: t, pj: 0, gf: 0, gc: 0 }
   for (const m of matches) {
-    if (!isFinished(m) || m.hs === null || m.as === null) continue
+    if (!countsForTable(m)) continue
     if (stats[m.home]) { stats[m.home].pj++; stats[m.home].gf += m.hs; stats[m.home].gc += m.as }
     if (stats[m.away]) { stats[m.away].pj++; stats[m.away].gf += m.as; stats[m.away].gc += m.hs }
   }

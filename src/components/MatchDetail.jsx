@@ -129,7 +129,11 @@ function StatsTab({ m, group, allMatches, timeline, played, live }) {
                   key={row.team}
                   className={`${i < 2 ? 'qualify' : i === 2 ? 'maybe' : ''} ${row.team === m.home || row.team === m.away ? 'highlight' : ''}`}
                 >
-                  <td className="left team-cell"><span className="pos">{i + 1}</span>{esName(row.team)}</td>
+                  <td className="left team-cell">
+                    <span className="pos">{i + 1}</span>
+                    {esName(row.team)}
+                    {row.live && <span className="live-mini" title="Jugando ahora" />}
+                  </td>
                   <td>{row.pj}</td><td>{row.g}</td><td>{row.e}</td><td>{row.p}</td>
                   <td>{row.gf}</td><td>{row.gc}</td>
                   <td>{row.gf - row.gc > 0 ? `+${row.gf - row.gc}` : row.gf - row.gc}</td>

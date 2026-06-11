@@ -427,6 +427,16 @@ body {
   text-transform: uppercase;
 }
 .status-live { color: var(--live); font-weight: 700; }
+.live-mini {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--live);
+  margin-left: 7px;
+  animation: pulse 1.4s ease infinite;
+  flex-shrink: 0;
+}
 .clock {
   font-size: 12px;
   font-variant-numeric: tabular-nums;

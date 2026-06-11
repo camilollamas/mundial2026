@@ -31,6 +31,7 @@ export default function Groups({ matches }) {
                       <span className="pos">{i + 1}</span>
                       <img src={flag(row.team)} alt="" className="badge sm" loading="lazy" />
                       {esName(row.team)}
+                      {row.live && <span className="live-mini" title="Jugando ahora" />}
                     </td>
                     <td>{row.pj}</td><td>{row.g}</td><td>{row.e}</td><td>{row.p}</td>
                     <td>{row.gf}</td><td>{row.gc}</td>
@@ -61,6 +62,7 @@ export default function Groups({ matches }) {
                   <span className="pos">{i + 1}</span>
                   <img src={flag(row.team)} alt="" className="badge sm" loading="lazy" />
                   {esName(row.team)}
+                  {row.live && <span className="live-mini" title="Jugando ahora" />}
                 </td>
                 <td>{row.group}</td>
                 <td>{row.pj}</td><td>{row.g}</td><td>{row.e}</td><td>{row.p}</td>

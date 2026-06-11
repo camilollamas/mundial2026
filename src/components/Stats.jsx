@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
-import { teamStats } from '../standings.js'
+import { teamStats, countsForTable } from '../standings.js'
 import { esName } from '../data/groups.js'
-import { getTimeline, isFinished } from '../api.js'
+import { getTimeline, isLive } from '../api.js'
 
 export default function Stats({ matches }) {
-  const finished = useMemo(() => matches.filter(isFinished), [matches])
+  // incluye los partidos en vivo: los goles y tablas se mueven en tiempo real
+  const played = useMemo(() => matches.filter(countsForTable), [matches])
+  const liveCount = useMemo(() => matches.filter(isLive).length, [matches])
   const stats = useMemo(
     () => teamStats(matches).filter((s) => s.pj > 0),
     [matches]
@@ -13,7 +15,7 @@ export default function Stats({ matches }) {
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(0)
 
-  const totalGoals = finished.reduce((s, m) => s + (m.hs ?? 0) + (m.as ?? 0), 0)
+  const totalGoals = played.reduce((s, m) => s + (m.hs ?? 0) + (m.as ?? 0), 0)
   const attack = [...stats].sort((a, b) => b.gf - a.gf).slice(0, 10)
   const defense = [...stats].sort((a, b) => a.gc - b.gc || b.pj - a.pj).slice(0, 10)
 
@@ -25,7 +27,7 @@ export default function Stats({ matches }) {
     const yellows = new Map()
     const reds = new Map()
     let done = 0
-    for (const m of finished) {
+    for (const m of played) {
       try {
         const tl = await getTimeline(m.id)
         for (const ev of tl) {
@@ -47,7 +49,7 @@ export default function Stats({ matches }) {
   const top = (map, n = 10) =>
     [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, n)
 
-  if (finished.length === 0) {
+  if (played.length === 0) {
     return (
       <section>
         <div className="card center-card">
@@ -64,10 +66,13 @@ export default function Stats({ matches }) {
   return (
     <section>
       <div className="stat-tiles">
-        <div className="tile"><strong>{finished.length}</strong><span>Partidos jugados</span></div>
+        <div className="tile">
+          <strong>{played.length}</strong>
+          <span>Partidos{liveCount > 0 ? ` · ${liveCount} en vivo` : ''}</span>
+        </div>
         <div className="tile"><strong>{totalGoals}</strong><span>Goles</span></div>
         <div className="tile">
-          <strong>{finished.length ? (totalGoals / finished.length).toFixed(2) : '0'}</strong>
+          <strong>{played.length ? (totalGoals / played.length).toFixed(2) : '0'}</strong>
           <span>Goles por partido</span>
         </div>
       </div>
@@ -82,10 +87,10 @@ export default function Stats({ matches }) {
         {!players && (
           <div className="center-card">
             <button className="btn" onClick={loadPlayerStats} disabled={loading}>
-              {loading ? `Analizando partidos… ${progress}/${finished.length}` : 'Cargar estadísticas de jugadores'}
+              {loading ? `Analizando partidos… ${progress}/${played.length}` : 'Cargar estadísticas de jugadores'}
             </button>
             <p className="muted small">
-              Se consultan las cronologías de los {finished.length} partidos jugados.
+              Se consultan las cronologías de los {played.length} partidos disputados.
               La API gratuita registra los eventos principales de cada partido.
             </p>
           </div>
