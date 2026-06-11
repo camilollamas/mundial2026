@@ -47,7 +47,7 @@ export default function News() {
 
   return (
     <section>
-      <p className="hint">Cobertura del Mundial por ESPN Deportes. Toca una nota para leerla aquí mismo.</p>
+      <p className="hint">Cobertura del Mundial: las noticias más recientes. Toca una nota para leerla aquí mismo.</p>
       <div className="news-grid">
         {articles.map((a) => (
           <article
