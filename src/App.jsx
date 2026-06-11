@@ -70,7 +70,7 @@ export default function App() {
         <div className="brand">
           <span className="brand-ball">⚽</span>
           <div>
-            <h1>MUNDIAL <span className="brand-year">2026</span></h1>
+            <h1>FÚTBOL TRACKER <span className="brand-year">M26</span></h1>
             <p className="brand-sub">CAN · MEX · USA</p>
           </div>
         </div>

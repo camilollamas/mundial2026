@@ -9,10 +9,10 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Mundial 2026 Tracker',
-        short_name: 'Mundial26',
+        name: 'Fútbol Tracker M26',
+        short_name: 'M26',
         description:
-          'Seguimiento del Mundial 2026: fixture, grupos, eliminatorias, estadísticas, plantillas y noticias.',
+          'Seguimiento del torneo de selecciones 2026: fixture, grupos, eliminatorias, estadísticas, plantillas y noticias.',
         lang: 'es',
         start_url: '/',
         display: 'standalone',
@@ -30,6 +30,8 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // incluir banderas e iconos en el precache para uso offline
+        globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'],
         // escudos y fotos: cache-first para que el fixture funcione offline
         runtimeCaching: [
           {

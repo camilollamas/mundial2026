@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { GROUPS, esName } from '../data/groups.js'
+import { flag } from '../data/flags.js'
 import { getPlayers } from '../api.js'
 import squads from '../data/squads.json'
 
@@ -40,13 +41,12 @@ export default function Squads({ matches }) {
   }
 
   if (selected) {
-    const t = teams[selected]
     const squad = squads[selected]
     return (
       <section>
         <button className="btn ghost" onClick={() => setSelected(null)}>← Volver a equipos</button>
         <div className="squad-head">
-          <img src={t?.badge} alt="" className="badge xl" />
+          <img src={flag(selected)} alt="" className="badge xl" />
           <div>
             <h2>{esName(selected)}</h2>
             {squad?.coach && (
@@ -109,7 +109,7 @@ export default function Squads({ matches }) {
           <div className="teams-grid">
             {names.map((name) => (
               <button key={name} className="team-tile" onClick={() => open(name)}>
-                <img src={teams[name]?.badge} alt="" className="badge lg" loading="lazy" />
+                <img src={flag(name)} alt="" className="badge lg" loading="lazy" />
                 <span>{esName(name)}</span>
                 <span className="muted small">{squads[name]?.coach || ''}</span>
               </button>

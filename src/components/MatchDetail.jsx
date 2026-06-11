@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { TEAM_GROUP, esName } from '../data/groups.js'
+import { flag } from '../data/flags.js'
 import { winProbability } from '../data/ratings.js'
 import { computeStandings } from '../standings.js'
 import { getTimeline, getLineups, isLive } from '../api.js'
@@ -31,7 +32,7 @@ export default function MatchDetail({ m, allMatches = [], onClose }) {
 
         <div className="sheet-head">
           <div className="sheet-team">
-            <img src={m.hb} alt="" className="badge lg" />
+            <img src={flag(m.home)} alt="" className="badge lg" />
             <span>{esName(m.home)}</span>
           </div>
           <div className="sheet-score">
@@ -43,7 +44,7 @@ export default function MatchDetail({ m, allMatches = [], onClose }) {
             <span className="muted small">{group ? `Grupo ${group}` : 'Eliminatoria'}</span>
           </div>
           <div className="sheet-team">
-            <img src={m.ab} alt="" className="badge lg" />
+            <img src={flag(m.away)} alt="" className="badge lg" />
             <span>{esName(m.away)}</span>
           </div>
         </div>
@@ -177,15 +178,13 @@ function LineupsTab({ m }) {
 
   return (
     <div className="lineups">
-      {[
-        { name: m.home, badge: m.hb },
-        { name: m.away, badge: m.ab },
-      ].map((t) => {
-        const side = lineups[t.name]
+      {[m.home, m.away].map((name) => {
+        const side = lineups[name]
+        const t = { name }
         return (
           <div key={t.name} className="lineup-col">
             <div className="lineup-head">
-              <img src={t.badge} alt="" className="badge" />
+              <img src={flag(t.name)} alt="" className="badge" />
               <strong>{esName(t.name)}</strong>
               {side.formation && <span className="formation-pill">{side.formation}</span>}
             </div>

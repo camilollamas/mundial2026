@@ -364,7 +364,7 @@ body {
   gap: 8px;
   min-width: 0;
 }
-.match-team .badge { width: 34px; height: 34px; }
+.match-team .badge { width: 38px; }
 .team-name {
   font-weight: 600;
   font-size: 13px;
@@ -376,10 +376,19 @@ body {
   -webkit-box-orient: vertical;
 }
 
-.badge { width: 28px; height: 28px; object-fit: contain; flex-shrink: 0; }
-.badge.sm { width: 20px; height: 20px; }
-.badge.lg { width: 46px; height: 46px; }
-.badge.xl { width: 68px; height: 68px; }
+/* banderas nacionales (4:3, dominio público) */
+.badge {
+  width: 34px;
+  aspect-ratio: 4 / 3;
+  height: auto;
+  object-fit: cover;
+  flex-shrink: 0;
+  border-radius: 4px;
+  box-shadow: 0 0 0 1px var(--border), 0 1px 3px rgba(15, 27, 45, 0.18);
+}
+.badge.sm { width: 23px; border-radius: 3px; }
+.badge.lg { width: 50px; border-radius: 5px; }
+.badge.xl { width: 74px; border-radius: 6px; }
 
 .match-score {
   display: flex;

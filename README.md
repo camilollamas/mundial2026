@@ -1,6 +1,10 @@
-# ⚽ Mundial 2026 Tracker
+# ⚽ Fútbol Tracker M26
 
-App web-mobile personal para seguir el Mundial de Fútbol 2026 (Canadá · México · EE. UU.) en tiempo real.
+App web-mobile personal para seguir el torneo de selecciones 2026 (Canadá · México · EE. UU.) en tiempo real.
+
+Identidad visual: banderas nacionales (dominio público, vía `flag-icons`) autoalojadas en
+`public/flags/`; regenerar con `node scripts/build-flags.mjs` si cambia el mapeo en
+`src/data/flags.js`.
 
 ## Arranque
 

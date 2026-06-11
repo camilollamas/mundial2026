@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { esName, TEAM_GROUP } from '../data/groups.js'
+import { flag } from '../data/flags.js'
 import { isLive } from '../api.js'
 import MatchDetail from './MatchDetail.jsx'
 
@@ -29,7 +30,7 @@ export default function MatchCard({ m, allMatches = [] }) {
         </div>
         <div className="match-row">
           <div className="match-team">
-            <img src={m.hb} alt="" className="badge" loading="lazy" />
+            <img src={flag(m.home)} alt="" className="badge" loading="lazy" />
             <span className="team-name">{esName(m.home)}</span>
           </div>
           <div className="match-score">
@@ -45,7 +46,7 @@ export default function MatchCard({ m, allMatches = [] }) {
             )}
           </div>
           <div className="match-team">
-            <img src={m.ab} alt="" className="badge" loading="lazy" />
+            <img src={flag(m.away)} alt="" className="badge" loading="lazy" />
             <span className="team-name">{esName(m.away)}</span>
           </div>
         </div>

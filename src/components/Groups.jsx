@@ -1,15 +1,11 @@
 import { useMemo } from 'react'
 import { computeStandings, bestThirds } from '../standings.js'
 import { GROUPS, esName } from '../data/groups.js'
+import { flag } from '../data/flags.js'
 
 export default function Groups({ matches }) {
   const standings = useMemo(() => computeStandings(matches), [matches])
   const thirds = useMemo(() => bestThirds(standings), [standings])
-  const badges = useMemo(() => {
-    const map = {}
-    for (const m of matches) { map[m.home] = m.hb; map[m.away] = m.ab }
-    return map
-  }, [matches])
 
   return (
     <section>
@@ -33,7 +29,7 @@ export default function Groups({ matches }) {
                   <tr key={row.team} className={i < 2 ? 'qualify' : i === 2 ? 'maybe' : ''}>
                     <td className="left team-cell">
                       <span className="pos">{i + 1}</span>
-                      <img src={badges[row.team]} alt="" className="badge sm" loading="lazy" />
+                      <img src={flag(row.team)} alt="" className="badge sm" loading="lazy" />
                       {esName(row.team)}
                     </td>
                     <td>{row.pj}</td><td>{row.g}</td><td>{row.e}</td><td>{row.p}</td>
@@ -63,7 +59,7 @@ export default function Groups({ matches }) {
               <tr key={row.team} className={i < 8 ? 'qualify' : ''}>
                 <td className="left team-cell">
                   <span className="pos">{i + 1}</span>
-                  <img src={badges[row.team]} alt="" className="badge sm" loading="lazy" />
+                  <img src={flag(row.team)} alt="" className="badge sm" loading="lazy" />
                   {esName(row.team)}
                 </td>
                 <td>{row.group}</td>
