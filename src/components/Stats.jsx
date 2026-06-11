@@ -14,6 +14,7 @@ export default function Stats({ matches }) {
   const [players, setPlayers] = useState(null) // { goals: Map, yellows: Map, reds: Map }
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(0)
+  const [view, setView] = useState('equipos')
 
   const totalGoals = played.reduce((s, m) => s + (m.hs ?? 0) + (m.as ?? 0), 0)
   const attack = [...stats].sort((a, b) => b.gf - a.gf).slice(0, 10)
@@ -77,32 +78,49 @@ export default function Stats({ matches }) {
         </div>
       </div>
 
-      <div className="groups-grid">
-        <RankCard title="🔥 Mejores ataques" rows={attack} value={(s) => s.gf} suffix="goles" />
-        <RankCard title="🧱 Mejores defensas" rows={defense} value={(s) => s.gc} suffix="en contra" />
+      <div className="seg-tabs">
+        <button
+          className={view === 'equipos' ? 'seg active' : 'seg'}
+          onClick={() => setView('equipos')}
+        >
+          🏟️ Equipos
+        </button>
+        <button
+          className={view === 'jugadores' ? 'seg active' : 'seg'}
+          onClick={() => {
+            setView('jugadores')
+            if (!players && !loading) loadPlayerStats()
+          }}
+        >
+          ⚽ Jugadores
+        </button>
       </div>
 
-      <div className="card">
-        <h3 className="card-title">Goleadores y tarjetas por jugador</h3>
-        {!players && (
-          <div className="center-card">
-            <button className="btn" onClick={loadPlayerStats} disabled={loading}>
-              {loading ? `Analizando partidos… ${progress}/${played.length}` : 'Cargar estadísticas de jugadores'}
-            </button>
-            <p className="muted small">
-              Se consultan las cronologías de los {played.length} partidos disputados.
-              La API gratuita registra los eventos principales de cada partido.
+      {view === 'equipos' && (
+        <div className="groups-grid">
+          <RankCard title="🔥 Mejores ataques" rows={attack} value={(s) => s.gf} suffix="goles" />
+          <RankCard title="🧱 Mejores defensas" rows={defense} value={(s) => s.gc} suffix="en contra" />
+        </div>
+      )}
+
+      {view === 'jugadores' && (
+        <div className="card">
+          {!players && (
+            <p className="muted center">
+              {loading
+                ? `Analizando partidos… ${progress}/${played.length}`
+                : 'Cargando estadísticas de jugadores…'}
             </p>
-          </div>
-        )}
-        {players && (
-          <div className="groups-grid">
-            <PlayerList title="⚽ Goleadores" data={top(players.goals)} />
-            <PlayerList title="🟨 Amarillas" data={top(players.yellows)} />
-            <PlayerList title="🟥 Rojas" data={top(players.reds)} />
-          </div>
-        )}
-      </div>
+          )}
+          {players && (
+            <div className="groups-grid">
+              <PlayerList title="⚽ Goleadores" data={top(players.goals)} />
+              <PlayerList title="🟨 Amarillas" data={top(players.yellows)} />
+              <PlayerList title="🟥 Rojas" data={top(players.reds)} />
+            </div>
+          )}
+        </div>
+      )}
     </section>
   )
 }

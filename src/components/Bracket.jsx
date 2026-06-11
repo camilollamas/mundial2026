@@ -16,21 +16,26 @@ export default function Bracket({ matches, groupMatches }) {
         Fase final a eliminación directa: 32 equipos, del 28 de junio al 19 de julio.
         Los cruces aparecen aquí automáticamente cuando se definen.
       </p>
-      <div className="bracket-scroll">
+      <div className="bracket-stack">
         {KO_STAGES.map((stage) => {
           const stageMatches = matches.filter((m) => m.stage === stage.key)
+          const pending = stage.slots - stageMatches.length
           return (
             <div key={stage.key} className="stage-col">
               <h3 className="stage-title">
                 {stage.name}
                 <span className="stage-dates">{STAGE_DATES[stage.key]}</span>
               </h3>
-              {stageMatches.map((m) => <MatchCard key={m.id} m={m} allMatches={groupMatches} />)}
-              {Array.from({ length: stage.slots - stageMatches.length }).map((_, i) => (
-                <div key={i} className="match placeholder">
-                  <span className="muted">Por definirse</span>
-                </div>
-              ))}
+              <div className="stage-matches">
+                {stageMatches.map((m) => <MatchCard key={m.id} m={m} allMatches={groupMatches} />)}
+                {pending > 0 && (
+                  <div className="match placeholder">
+                    <span className="muted">
+                      {pending === 1 ? '1 partido por definirse' : `${pending} partidos por definirse`}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           )
         })}

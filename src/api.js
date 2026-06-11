@@ -115,17 +115,50 @@ const normName = (s) =>
 
 const espnName = (team) => normName(ESPN_NAMES[team] || team)
 
+// Localiza el evento de ESPN correspondiente a un partido nuestro.
+async function findEspnEvent(m) {
+  const date = m.date.replaceAll('-', '')
+  const sb = await fetchJSON(`${ESPN}/scoreboard?dates=${date}`, `espnsb${date}`, 600_000)
+  return (
+    (sb.events || []).find((e) => {
+      const names = (e.competitions?.[0]?.competitors || []).map((c) =>
+        normName(c.team?.displayName)
+      )
+      return names.includes(espnName(m.home)) && names.includes(espnName(m.away))
+    }) || null
+  )
+}
+
+// Incidencias completas del partido en español (goles, tarjetas, cambios,
+// pausas, VAR, etc.) desde keyEvents de ESPN. null si no hay datos.
+export async function getIncidents(m) {
+  const ev = await findEspnEvent(m)
+  if (!ev) return null
+  const sum = await fetchJSON(
+    `${ESPN}/summary?event=${ev.id}&lang=es&region=mx`,
+    `espninc${ev.id}`,
+    isFinished(m) ? 3_600_000 : 45_000
+  )
+  const raw = (sum.keyEvents || []).map((k) => ({
+    min: k.clock?.displayValue || '',
+    type: k.type?.text || '',
+    text: k.text || '',
+    team: k.team?.displayName || '',
+  }))
+  // ESPN duplica algunos eventos (uno por equipo); nos quedamos con el que trae texto
+  const seen = new Map()
+  for (const it of raw) {
+    const key = `${it.min}|${it.type}`
+    if (!seen.has(key) || (it.text && !seen.get(key).text)) seen.set(key, it)
+  }
+  const list = [...seen.values()]
+  return list.length ? list : null
+}
+
 // Devuelve { [equipo]: { formation, starters[], subs[] } } con las claves
 // m.home / m.away, o null si ESPN aún no publica la alineación.
 export async function getLineups(m) {
-  const date = m.date.replaceAll('-', '')
-  const sb = await fetchJSON(`${ESPN}/scoreboard?dates=${date}`, `espnsb${date}`, 600_000)
-  const ev = (sb.events || []).find((e) => {
-    const names = (e.competitions?.[0]?.competitors || []).map((c) =>
-      normName(c.team?.displayName)
-    )
-    return names.includes(espnName(m.home)) && names.includes(espnName(m.away))
-  })
+  const ev = await findEspnEvent(m)
   if (!ev) return null
 
   // sin caché previa: revisamos frescura según si ya hay titulares

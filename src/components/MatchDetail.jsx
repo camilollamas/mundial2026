@@ -3,20 +3,53 @@ import { TEAM_GROUP, esName } from '../data/groups.js'
 import { flag } from '../data/flags.js'
 import { winProbability } from '../data/ratings.js'
 import { computeStandings } from '../standings.js'
-import { getTimeline, getLineups, isLive } from '../api.js'
+import { getTimeline, getIncidents, getLineups, isLive } from '../api.js'
+
+// adapta la cronología básica de TheSportsDB al formato de incidencias
+const timelineToIncident = (ev) => ({
+  min: ev.intTime ? `${ev.intTime}'` : '',
+  type:
+    ev.strTimeline === 'Goal' ? 'Gol'
+    : ev.strTimeline === 'Card'
+      ? (String(ev.strTimelineDetail).includes('Red') ? 'Tarjeta roja' : 'Tarjeta amarilla')
+      : 'Cambio',
+  text: `${ev.strPlayer || ''}${ev.strTeam ? ` (${ev.strTeam})` : ''}`,
+  team: ev.strTeam || '',
+})
+
+function incidentIcon(it) {
+  const t = `${it.type} ${it.text}`.toLowerCase()
+  if (t.includes('roja')) return '🟥'
+  if (t.includes('amarilla')) return '🟨'
+  if (t.includes('gol')) return '⚽'
+  if (t.includes('sustitu') || t.includes('cambio')) return '🔁'
+  if (t.includes('hidrata')) return '💧'
+  if (t.includes('var') || t.includes('penal')) return '📺'
+  return '⏱️'
+}
 
 export default function MatchDetail({ m, allMatches = [], onClose }) {
   const [tab, setTab] = useState('stats')
-  const [timeline, setTimeline] = useState(null)
+  const [incidents, setIncidents] = useState(null)
   const played = m.hs !== null && m.as !== null
   const live = isLive(m)
   const group = TEAM_GROUP[m.home] === TEAM_GROUP[m.away] ? TEAM_GROUP[m.home] : null
 
+  // incidencias completas de ESPN; si no hay, cronología básica de TheSportsDB
   useEffect(() => {
-    if (played || live) {
-      getTimeline(m.id).then(setTimeline).catch(() => setTimeline([]))
-    }
-  }, [m.id, played, live])
+    if (!(played || live)) return
+    let cancel = false
+    getIncidents(m)
+      .then((list) => {
+        if (cancel) return
+        if (list) return setIncidents(list)
+        return getTimeline(m.id).then(
+          (tl) => !cancel && setIncidents(tl.map(timelineToIncident))
+        )
+      })
+      .catch(() => !cancel && setIncidents([]))
+    return () => { cancel = true }
+  }, [m.id, m.status, m.hs, m.as, played, live])
 
   // cerrar con Escape
   useEffect(() => {
@@ -64,7 +97,7 @@ export default function MatchDetail({ m, allMatches = [], onClose }) {
 
         <div className="sheet-body">
           {tab === 'stats' ? (
-            <StatsTab m={m} group={group} allMatches={allMatches} timeline={timeline} played={played} live={live} />
+            <StatsTab m={m} group={group} allMatches={allMatches} incidents={incidents} played={played} live={live} />
           ) : (
             <LineupsTab m={m} />
           )}
@@ -74,7 +107,7 @@ export default function MatchDetail({ m, allMatches = [], onClose }) {
   )
 }
 
-function StatsTab({ m, group, allMatches, timeline, played, live }) {
+function StatsTab({ m, group, allMatches, incidents, played, live }) {
   const prob = winProbability(m.home, m.away)
   const standings = group ? computeStandings(allMatches)[group] : null
 
@@ -93,20 +126,20 @@ function StatsTab({ m, group, allMatches, timeline, played, live }) {
       </div>
       <p className="muted small">Estimación según rating de cada selección.</p>
 
-      {(played || live) && timeline && timeline.length > 0 && (
+      {(played || live) && incidents && incidents.length > 0 && (
         <>
           <h4 className="sheet-section">Incidencias</h4>
           <div className="timeline">
-            {timeline.map((ev, i) => (
-              <div key={i} className="timeline-item">
-                <span className="tl-min">{ev.intTime}&apos;</span>
-                <span className="tl-icon">
-                  {ev.strTimeline === 'Goal' ? '⚽' : ev.strTimeline === 'Card'
-                    ? (String(ev.strTimelineDetail).includes('Red') ? '🟥' : '🟨')
-                    : '🔁'}
-                </span>
-                <span>{ev.strPlayer}</span>
-                <span className="muted">{esName(ev.strTeam || '')}</span>
+            {incidents.map((it, i) => (
+              <div key={i} className="incident-row">
+                <span className="tl-min">{it.min || '—'}</span>
+                <span className="tl-icon">{incidentIcon(it)}</span>
+                <div className="incident-body">
+                  <span className="incident-type">
+                    {it.type}{it.team ? ` · ${it.team}` : ''}
+                  </span>
+                  {it.text && <p className="incident-text">{it.text}</p>}
+                </div>
               </div>
             ))}
           </div>
