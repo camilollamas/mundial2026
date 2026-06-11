@@ -972,6 +972,33 @@ tr.highlight td { background: var(--primary-soft); }
   .lineup-row .muted { display: none; }
 }
 
+/* ---------- aviso de actualización PWA ---------- */
+.update-toast {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(86px + env(safe-area-inset-bottom));
+  z-index: 60;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap-md);
+  width: min(440px, calc(100vw - 32px));
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-hover);
+  font-size: 13px;
+  font-weight: 600;
+  animation: sheet-up 0.25s ease;
+}
+.update-toast > span { flex: 1 1 180px; line-height: 1.4; }
+.update-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.btn.sm { padding: 8px 14px; font-size: 12px; }
+.btn.ghost.sm { margin-bottom: 0; }
+
 /* ---------- noticias ---------- */
 .news-grid {
   display: grid;

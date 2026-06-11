@@ -5,6 +5,7 @@ import Groups from './components/Groups.jsx'
 import Bracket from './components/Bracket.jsx'
 import Stats from './components/Stats.jsx'
 import Squads from './components/Squads.jsx'
+import UpdateToast from './components/UpdateToast.jsx'
 import News from './components/News.jsx'
 
 const TABS = [
@@ -108,6 +109,8 @@ export default function App() {
         {tab === 'squads' && <Squads />}
         {tab === 'news' && <News />}
       </main>
+
+      <UpdateToast />
 
       <nav className="tabbar">
         {TABS.map((t) => (
