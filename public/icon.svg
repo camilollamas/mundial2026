@@ -1,7 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#0b1220"/>
-  <circle cx="32" cy="32" r="20" fill="#f3f4f6"/>
-  <polygon points="32,22 41,28.5 37.5,39 26.5,39 23,28.5" fill="#0b1220"/>
-  <path d="M32 12a20 20 0 0 1 20 20" stroke="#22c55e" stroke-width="4" fill="none" stroke-linecap="round"/>
-  <path d="M32 52a20 20 0 0 1-20-20" stroke="#eab308" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#14b8a6"/>
+      <stop offset="1" stop-color="#38bdf8"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0" r="1">
+      <stop offset="0" stop-color="#14b8a6" stop-opacity="0.35"/>
+      <stop offset="0.6" stop-color="#14b8a6" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#0d1424"/>
+  <rect width="64" height="64" rx="14" fill="url(#glow)"/>
+  <g fill="none" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 43 V19 L14 32 L22 19 V43" stroke="#e8edf6"/>
+    <path d="M27 25 C27 20 31 18 34 18 C38 18 41 20.5 41 25 C41 32 27 34.5 27 43 L41 43" stroke="url(#g)"/>
+    <path d="M57 19 C49.5 19 46.5 26 46 35" stroke="url(#g)"/>
+    <circle cx="52.5" cy="36.5" r="6.5" stroke="url(#g)"/>
+  </g>
+  <rect x="20" y="52" width="24" height="3.5" rx="1.75" fill="url(#g)"/>
 </svg>
