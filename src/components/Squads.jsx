@@ -1,44 +1,13 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { GROUPS, esName } from '../data/groups.js'
 import { flag } from '../data/flags.js'
-import { getPlayers } from '../api.js'
 import squads from '../data/squads.json'
 
 const POS_ORDER = ['GK', 'DF', 'MF', 'FW']
 const POS_LABEL = { GK: 'Porteros', DF: 'Defensas', MF: 'Mediocampistas', FW: 'Delanteros' }
 
-// normaliza nombres para cruzar Wikipedia con las fotos de TheSportsDB
-const norm = (s) =>
-  s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
-
-export default function Squads({ matches }) {
-  // ids y escudos de los 48 equipos, derivados de los partidos.
-  const teams = useMemo(() => {
-    const map = {}
-    for (const m of matches) {
-      map[m.home] = { id: m.homeId, badge: m.hb }
-      map[m.away] = { id: m.awayId, badge: m.ab }
-    }
-    return map
-  }, [matches])
-
+export default function Squads() {
   const [selected, setSelected] = useState(null)
-  const [photos, setPhotos] = useState({})
-
-  async function open(name) {
-    setSelected(name)
-    setPhotos({})
-    try {
-      const apiPlayers = await getPlayers(teams[name].id)
-      const map = {}
-      for (const p of apiPlayers) {
-        if (p.strCutout || p.strThumb) map[norm(p.strPlayer)] = p.strCutout || p.strThumb
-      }
-      setPhotos(map)
-    } catch {
-      /* sin fotos: la plantilla se muestra igual */
-    }
-  }
 
   if (selected) {
     const squad = squads[selected]
@@ -66,27 +35,16 @@ export default function Squads({ matches }) {
             <div key={pos}>
               <h3 className="date-head">{POS_LABEL[pos]} ({list.length})</h3>
               <div className="players-grid">
-                {list.map((p) => {
-                  const photo = photos[norm(p.name)]
-                  return (
-                    <div key={`${p.no}-${p.name}`} className="player-card">
-                      {photo ? (
-                        <img src={photo} alt="" className="player-photo" loading="lazy" />
-                      ) : (
-                        <div className="player-photo placeholder-photo">{p.no}</div>
-                      )}
-                      <div className="player-info">
-                        <strong>{p.name}</strong>
-                        <p className="muted small">
-                          #{p.no} · {p.age} años · {p.club}
-                        </p>
-                        <p className="muted small">
-                          {p.caps} PI · {p.goals} goles
-                        </p>
-                      </div>
+                {list.map((p) => (
+                  <div key={`${p.no}-${p.name}`} className="player-card">
+                    <span className="player-num">{p.no}</span>
+                    <div className="player-info">
+                      <strong>{p.name}</strong>
+                      <p className="muted small">{p.age} años · {p.club}</p>
+                      <p className="muted small">{p.caps} PI · {p.goals} goles</p>
                     </div>
-                  )
-                })}
+                  </div>
+                ))}
               </div>
             </div>
           )
@@ -108,7 +66,7 @@ export default function Squads({ matches }) {
           <h3 className="date-head">Grupo {g}</h3>
           <div className="teams-grid">
             {names.map((name) => (
-              <button key={name} className="team-tile" onClick={() => open(name)}>
+              <button key={name} className="team-tile" onClick={() => setSelected(name)}>
                 <img src={flag(name)} alt="" className="badge lg" loading="lazy" />
                 <span>{esName(name)}</span>
                 <span className="muted small">{squads[name]?.coach || ''}</span>

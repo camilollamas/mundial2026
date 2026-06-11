@@ -105,7 +105,7 @@ export default function App() {
         {tab === 'groups' && <Groups matches={groupMatches} />}
         {tab === 'bracket' && <Bracket matches={koMatches} groupMatches={groupMatches} />}
         {tab === 'stats' && <Stats matches={allMatches} />}
-        {tab === 'squads' && <Squads matches={groupMatches} />}
+        {tab === 'squads' && <Squads />}
         {tab === 'news' && <News />}
       </main>
 

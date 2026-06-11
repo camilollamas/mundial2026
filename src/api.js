@@ -97,12 +97,6 @@ export async function getTimeline(eventId) {
   return data.timeline || []
 }
 
-// Plantilla de una selección (límite free: 10 jugadores destacados).
-export async function getPlayers(teamId) {
-  const data = await fetchJSON(`lookup_all_players.php?id=${teamId}`, `pl${teamId}`, 86_400_000)
-  return data.player || []
-}
-
 // --- Alineaciones oficiales por partido (API pública de ESPN) ---
 // TheSportsDB no las da en el plan gratuito; ESPN las publica ~1 h antes
 // del pitazo en summary.rosters (titulares, formación y suplentes).
