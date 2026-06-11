@@ -168,6 +168,22 @@ export async function getLineups(m) {
   return Object.keys(out).length === 2 ? out : null
 }
 
+// Noticias del Mundial en español (ESPN Deportes), caché de 10 minutos.
+export async function getNews() {
+  const data = await fetchJSON(
+    `${ESPN}/news?lang=es&region=mx&limit=20`,
+    'espnnews',
+    600_000
+  )
+  return (data.articles || []).map((a) => ({
+    headline: a.headline,
+    description: a.description || '',
+    published: a.published,
+    image: a.images?.[0]?.url || null,
+    link: a.links?.web?.href || null,
+  }))
+}
+
 export const isFinished = (m) => m.status === 'FT' || m.status === 'AET' || m.status === 'PEN'
 export const isLive = (m) =>
   ['1H', '2H', 'HT', 'ET', 'BT', 'P', 'LIVE'].includes(m.status)

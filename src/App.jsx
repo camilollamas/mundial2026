@@ -5,6 +5,7 @@ import Groups from './components/Groups.jsx'
 import Bracket from './components/Bracket.jsx'
 import Stats from './components/Stats.jsx'
 import Squads from './components/Squads.jsx'
+import News from './components/News.jsx'
 
 const TABS = [
   { key: 'fixture', label: 'Fixture', icon: '📅' },
@@ -12,6 +13,7 @@ const TABS = [
   { key: 'bracket', label: 'Llaves', icon: '🏆' },
   { key: 'stats', label: 'Stats', icon: '📊' },
   { key: 'squads', label: 'Equipos', icon: '👕' },
+  { key: 'news', label: 'Noticias', icon: '📰' },
 ]
 
 export default function App() {
@@ -104,6 +106,7 @@ export default function App() {
         {tab === 'bracket' && <Bracket matches={koMatches} groupMatches={groupMatches} />}
         {tab === 'stats' && <Stats matches={allMatches} />}
         {tab === 'squads' && <Squads matches={groupMatches} />}
+        {tab === 'news' && <News />}
       </main>
 
       <nav className="tabbar">
