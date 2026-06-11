@@ -176,12 +176,29 @@ export async function getNews() {
     600_000
   )
   return (data.articles || []).map((a) => ({
+    id: a.id,
     headline: a.headline,
     description: a.description || '',
     published: a.published,
     image: a.images?.[0]?.url || null,
     link: a.links?.web?.href || null,
   }))
+}
+
+// Cuerpo completo de una nota (HTML) para leerla dentro de la app.
+export async function getArticle(id) {
+  const data = await fetchJSON(
+    `https://content.core.api.espn.com/v1/sports/news/${id}?lang=es&region=mx`,
+    `art${id}`,
+    86_400_000
+  )
+  const a = data.headlines?.[0] || data
+  return {
+    headline: a.headline,
+    byline: a.byline || '',
+    published: a.published,
+    story: a.story || '',
+  }
 }
 
 export const isFinished = (m) => m.status === 'FT' || m.status === 'AET' || m.status === 'PEN'
