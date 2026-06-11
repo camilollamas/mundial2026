@@ -121,13 +121,13 @@ function ArticleReader({ meta, onClose }) {
             <p className="muted">{meta.description}</p>
           )}
 
-          {article && meta.link && (
+          {/* {article && meta.link && (
             <p className="article-footer">
               <a href={meta.link} target="_blank" rel="noopener noreferrer">
                 Ver nota original en ESPN →
               </a>
             </p>
-          )}
+          )} */}
         </div>
       </div>
     </div>
