@@ -16,7 +16,11 @@ npm run build    # producción en dist/
 - **Offline-first**: los 72 partidos de fase de grupos están embebidos en `src/data/seed-matches.json`; si no hay conexión la app funciona igual ("Modo sin conexión").
 - **Caché en localStorage** con TTL por endpoint (90 s resultados, 5 min eliminatorias, 1 h cronologías, 24 h plantillas).
 - **Auto-refresh**: cada 60 s cuando hay partidos en vivo, cada 5 min en reposo.
-- **PWA**: manifest + icono; se puede "Agregar a pantalla de inicio" en el móvil.
+- **PWA completa**: service worker (vite-plugin-pwa/Workbox) con precache del app shell,
+  auto-actualización en cada deploy y caché de escudos/fotos; manifest con iconos PNG
+  192/512 + maskable y apple-touch-icon. Instalable desde Chrome/Android ("Instalar app")
+  y iOS (Compartir → Agregar a pantalla de inicio), funciona offline.
+  Si cambias `public/icon.svg`, regenera los PNG con `node scripts/build-icons.mjs`.
 
 ## Pestañas
 
