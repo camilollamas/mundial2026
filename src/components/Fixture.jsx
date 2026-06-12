@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import MatchCard from './MatchCard.jsx'
 import { GROUPS, TEAM_GROUP, esName } from '../data/groups.js'
-import { isFinished } from '../api.js'
+import { isFinished, isLive } from '../api.js'
 
 const fmtDate = (iso) =>
   new Date(iso + 'T12:00:00').toLocaleDateString('es', {
@@ -18,7 +18,7 @@ const matchLocalDate = (m) => toLocalISO(new Date(m.ts + 'Z'))
 export default function Fixture({ matches }) {
   const [group, setGroup] = useState('all')
   const [team, setTeam] = useState('all')
-  const [view, setView] = useState('upcoming')
+  const [view, setView] = useState('auto')
   const today = toLocalISO(new Date())
 
   const filtered = useMemo(() => {
@@ -28,10 +28,16 @@ export default function Fixture({ matches }) {
     return [...list].sort((a, b) => (a.ts < b.ts ? -1 : 1))
   }, [matches, group, team])
 
-  // próximos (incluye en vivo) en orden cronológico; finalizados del más reciente al más viejo
-  const upcoming = useMemo(() => filtered.filter((m) => !isFinished(m)), [filtered])
+  // tres vistas: finalizados (recientes primero), en vivo y próximos.
+  // 'auto' (estado inicial) abre En vivo si hay partidos en curso.
   const finished = useMemo(() => filtered.filter(isFinished).reverse(), [filtered])
-  const shown = view === 'upcoming' ? upcoming : finished
+  const live = useMemo(() => filtered.filter(isLive), [filtered])
+  const upcoming = useMemo(
+    () => filtered.filter((m) => !isFinished(m) && !isLive(m)),
+    [filtered]
+  )
+  const resolved = view === 'auto' ? (live.length > 0 ? 'live' : 'upcoming') : view
+  const shown = resolved === 'finished' ? finished : resolved === 'live' ? live : upcoming
 
   const byDate = useMemo(() => {
     const map = new Map()
@@ -60,18 +66,29 @@ export default function Fixture({ matches }) {
 
       <div className="seg-tabs">
         <button
-          className={view === 'upcoming' ? 'seg active' : 'seg'}
-          onClick={() => setView('upcoming')}
-        >
-          Próximos y en vivo ({upcoming.length})
-        </button>
-        <button
-          className={view === 'finished' ? 'seg active' : 'seg'}
+          className={resolved === 'finished' ? 'seg active' : 'seg'}
           onClick={() => setView('finished')}
         >
           Finalizados ({finished.length})
         </button>
+        <button
+          className={resolved === 'live' ? 'seg active' : 'seg'}
+          onClick={() => setView('live')}
+        >
+          En vivo ({live.length})
+          {live.length > 0 && <span className="live-mini" />}
+        </button>
+        <button
+          className={resolved === 'upcoming' ? 'seg active' : 'seg'}
+          onClick={() => setView('upcoming')}
+        >
+          Próximos ({upcoming.length})
+        </button>
       </div>
+
+      {resolved === 'live' && live.length === 0 && (
+        <p className="muted center">No hay partidos en juego en este momento.</p>
+      )}
 
       {byDate.map(([date, list]) => (
         <div key={date} id={date === today ? 'today' : undefined}>
@@ -81,7 +98,9 @@ export default function Fixture({ matches }) {
           {list.map((m) => <MatchCard key={m.id} m={m} allMatches={matches} />)}
         </div>
       ))}
-      {byDate.length === 0 && <p className="muted center">Sin partidos para este filtro.</p>}
+      {byDate.length === 0 && resolved !== 'live' && (
+        <p className="muted center">Sin partidos para este filtro.</p>
+      )}
     </section>
   )
 }
