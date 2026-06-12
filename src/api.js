@@ -116,17 +116,26 @@ const normName = (s) =>
 const espnName = (team) => normName(ESPN_NAMES[team] || team)
 
 // Localiza el evento de ESPN correspondiente a un partido nuestro.
+// ESPN agrupa el scoreboard por fecha del Este de EE. UU., así que un partido
+// de las 02:00 UTC del día 12 vive en el scoreboard del día 11: probamos
+// primero la fecha ET del kickoff y de respaldo la fecha UTC.
 async function findEspnEvent(m) {
-  const date = m.date.replaceAll('-', '')
-  const sb = await fetchJSON(`${ESPN}/scoreboard?dates=${date}`, `espnsb${date}`, 600_000)
-  return (
-    (sb.events || []).find((e) => {
+  const etDate = new Date(m.ts + 'Z')
+    .toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
+    .replaceAll('-', '')
+  const utcDate = m.date.replaceAll('-', '')
+  const dates = etDate === utcDate ? [etDate] : [etDate, utcDate]
+  for (const date of dates) {
+    const sb = await fetchJSON(`${ESPN}/scoreboard?dates=${date}`, `espnsb${date}`, 600_000)
+    const ev = (sb.events || []).find((e) => {
       const names = (e.competitions?.[0]?.competitors || []).map((c) =>
         normName(c.team?.displayName)
       )
       return names.includes(espnName(m.home)) && names.includes(espnName(m.away))
-    }) || null
-  )
+    })
+    if (ev) return ev
+  }
+  return null
 }
 
 // Resumen completo del partido en español (compartido por incidencias y stats).
