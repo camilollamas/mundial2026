@@ -190,7 +190,8 @@ export async function getIncidents(m) {
     const key = `${it.min}|${it.type}`
     if (!seen.has(key) || (it.text && !seen.get(key).text)) seen.set(key, it)
   }
-  const list = [...seen.values()]
+  // más reciente primero
+  const list = [...seen.values()].reverse()
   return list.length ? list : null
 }
 

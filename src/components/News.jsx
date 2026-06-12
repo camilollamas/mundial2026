@@ -87,6 +87,13 @@ function ArticleReader({ meta, onClose }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
+  // bloquear el scroll del fondo mientras la nota está abierta
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [])
+
   return (
     <div className="overlay" onClick={onClose}>
       <div className="sheet" onClick={(e) => e.stopPropagation()}>

@@ -65,7 +65,7 @@ export default function MatchDetail({ m, allMatches = [], onClose }) {
         if (cancel) return
         if (list) return setIncidents(list)
         return getTimeline(m.id).then(
-          (tl) => !cancel && setIncidents(tl.map(timelineToIncident))
+          (tl) => !cancel && setIncidents(tl.map(timelineToIncident).reverse())
         )
       })
       .catch(() => !cancel && setIncidents([]))
@@ -81,6 +81,13 @@ export default function MatchDetail({ m, allMatches = [], onClose }) {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
+
+  // bloquear el scroll del fondo mientras el detalle está abierto
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [])
 
   return (
     <div className="overlay" onClick={onClose}>
