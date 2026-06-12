@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { teamStats, countsForTable } from '../standings.js'
 import { esName } from '../data/groups.js'
-import { getTimeline, isLive } from '../api.js'
+import { getIncidents, isLive } from '../api.js'
 
 export default function Stats({ matches }) {
   // incluye los partidos en vivo: los goles y tablas se mueven en tiempo real
@@ -20,8 +20,8 @@ export default function Stats({ matches }) {
   const attack = [...stats].sort((a, b) => b.gf - a.gf).slice(0, 10)
   const defense = [...stats].sort((a, b) => a.gc - b.gc || b.pj - a.pj).slice(0, 10)
 
-  // Recorre las cronologías de los partidos jugados y agrega goles y tarjetas
-  // por jugador (la API gratuita limita los eventos por partido, ver nota).
+  // Recorre las incidencias completas (ESPN) de los partidos disputados y
+  // agrega goles y tarjetas por jugador.
   async function loadPlayerStats() {
     setLoading(true)
     const goals = new Map()
@@ -30,17 +30,20 @@ export default function Stats({ matches }) {
     let done = 0
     for (const m of played) {
       try {
-        const tl = await getTimeline(m.id)
-        for (const ev of tl) {
-          const key = `${ev.strPlayer}|${ev.strTeam || ''}`
-          if (ev.strTimeline === 'Goal' && !String(ev.strTimelineDetail).includes('Own')) {
+        const incidents = (await getIncidents(m)) || []
+        for (const it of incidents) {
+          if (!it.player) continue
+          const key = `${it.player}|${it.team || ''}`
+          const t = it.type.toLowerCase()
+          if (t.includes('gol') && !/propia|autogol/i.test(`${it.type} ${it.text}`)) {
             goals.set(key, (goals.get(key) || 0) + 1)
-          } else if (ev.strTimeline === 'Card') {
-            const map = String(ev.strTimelineDetail).includes('Red') ? reds : yellows
-            map.set(key, (map.get(key) || 0) + 1)
+          } else if (t.includes('amarilla')) {
+            yellows.set(key, (yellows.get(key) || 0) + 1)
+          } else if (t.includes('roja')) {
+            reds.set(key, (reds.get(key) || 0) + 1)
           }
         }
-      } catch { /* partido sin cronología */ }
+      } catch { /* partido sin incidencias */ }
       setProgress(++done)
     }
     setPlayers({ goals, yellows, reds })

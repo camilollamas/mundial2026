@@ -138,16 +138,37 @@ async function findEspnEvent(m) {
   return null
 }
 
-// Resumen completo del partido en español (compartido por incidencias y stats).
+// Resumen completo del partido en español, compartido por incidencias,
+// stats y alineaciones. Solo vive en memoria (45 s): a localStorage van
+// únicamente los derivados pequeños, para no reventar la cuota de ~5 MB
+// con 104 summaries de ~200 KB.
+const summaryCache = new Map()
 async function fetchSummary(m) {
   const ev = await findEspnEvent(m)
   if (!ev) return null
-  return fetchJSON(
-    `${ESPN}/summary?event=${ev.id}&lang=es&region=mx`,
-    `espninc${ev.id}`,
-    isFinished(m) ? 3_600_000 : 45_000
-  )
+  const key = ev.id
+  if (!summaryCache.has(key)) {
+    const p = fetch(`${ESPN}/summary?event=${ev.id}&lang=es&region=mx`)
+      .then((r) => {
+        if (!r.ok) throw new Error(`ESPN ${r.status}`)
+        return r.json()
+      })
+      .catch((e) => {
+        summaryCache.delete(key)
+        throw e
+      })
+    summaryCache.set(key, p)
+    setTimeout(() => summaryCache.delete(key), 45_000)
+  }
+  return summaryCache.get(key)
 }
+
+// migración: purgar los summaries completos cacheados por versiones previas
+try {
+  for (const k of Object.keys(localStorage)) {
+    if (k.startsWith('m26:espninc') || k.startsWith('m26:espnln')) localStorage.removeItem(k)
+  }
+} catch { /* sin localStorage */ }
 
 // Estadísticas comparadas del partido (posesión, tiros, faltas...) del boxscore.
 const STAT_KEYS = [
@@ -163,6 +184,9 @@ const STAT_KEYS = [
 ]
 
 export async function getMatchStats(m) {
+  const ck = `mst${m.id}`
+  const cached = cacheGet(ck)
+  if (cached) return cached
   const sum = await fetchSummary(m)
   const teams = sum?.boxscore?.teams
   if (!teams || teams.length !== 2) return null
@@ -179,12 +203,17 @@ export async function getMatchStats(m) {
   const rows = STAT_KEYS
     .filter(([k]) => h[k] !== undefined && a[k] !== undefined)
     .map(([k, label]) => ({ label, home: h[k], away: a[k] }))
-  return rows.length ? rows : null
+  if (!rows.length) return null
+  cacheSet(ck, rows, isFinished(m) ? 86_400_000 : 45_000)
+  return rows
 }
 
 // Incidencias completas del partido en español (goles, tarjetas, cambios,
 // pausas, VAR, etc.) desde keyEvents de ESPN. null si no hay datos.
 export async function getIncidents(m) {
+  const ck = `inc${m.id}`
+  const cached = cacheGet(ck)
+  if (cached) return cached
   const sum = await fetchSummary(m)
   if (!sum) return null
   const raw = (sum.keyEvents || []).map((k) => ({
@@ -192,6 +221,8 @@ export async function getIncidents(m) {
     type: k.type?.text || '',
     text: k.text || '',
     team: k.team?.displayName || '',
+    player: k.participants?.[0]?.athlete?.displayName || '',
+    assist: k.participants?.[1]?.athlete?.displayName || '',
   }))
   // ESPN duplica algunos eventos (uno por equipo); nos quedamos con el que trae texto
   const seen = new Map()
@@ -201,32 +232,25 @@ export async function getIncidents(m) {
   }
   // más reciente primero
   const list = [...seen.values()].reverse()
-  return list.length ? list : null
+  if (!list.length) return null
+  cacheSet(ck, list, isFinished(m) ? 86_400_000 : 45_000)
+  return list
 }
 
 // Devuelve { [equipo]: { formation, starters[], subs[] } } con las claves
 // m.home / m.away, o null si ESPN aún no publica la alineación.
 export async function getLineups(m) {
-  const ev = await findEspnEvent(m)
-  if (!ev) return null
-
-  // sin caché previa: revisamos frescura según si ya hay titulares
-  const cacheKey = `espnln${ev.id}`
-  let sum = cacheGet(cacheKey)
-  if (!sum) {
-    const res = await fetch(`${ESPN}/summary?event=${ev.id}`)
-    if (!res.ok) throw new Error(`ESPN ${res.status}`)
-    sum = await res.json()
-    const announced = (sum.rosters || []).some((r) => (r.roster || []).length > 0)
-    cacheSet(cacheKey, sum, announced ? 3_600_000 : 120_000)
-  }
+  const ck = `lu${m.id}`
+  const cached = cacheGet(ck)
+  if (cached) return cached
+  const sum = await fetchSummary(m)
+  if (!sum) return null
 
   const out = {}
   for (const side of sum.rosters || []) {
-    const teamKey = [m.home, m.away].find(
-      (t) => espnName(t) === normName(side.team?.displayName)
-    )
-    if (!teamKey || !(side.roster || []).length) continue
+    // el summary en español traduce los nombres: cruzamos por homeAway
+    const teamKey = side.homeAway === 'home' ? m.home : m.away
+    if (!(side.roster || []).length) continue
     const players = side.roster.map((it) => ({
       name: it.athlete?.displayName || '',
       jersey: it.jersey || '',
@@ -241,7 +265,10 @@ export async function getLineups(m) {
       subs: players.filter((p) => !p.starter),
     }
   }
-  return Object.keys(out).length === 2 ? out : null
+  if (Object.keys(out).length !== 2) return null
+  // ya anunciada la alineación es estable; antes del anuncio no se cachea
+  cacheSet(ck, out, isFinished(m) ? 86_400_000 : 600_000)
+  return out
 }
 
 // Noticias del Mundial en español (ESPN Deportes), caché de 10 minutos.
