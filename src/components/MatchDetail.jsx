@@ -3,7 +3,26 @@ import { TEAM_GROUP, esName } from '../data/groups.js'
 import { flag } from '../data/flags.js'
 import { winProbability } from '../data/ratings.js'
 import { computeStandings } from '../standings.js'
-import { getTimeline, getIncidents, getLineups, isLive } from '../api.js'
+import { getTimeline, getIncidents, getLineups, getMatchStats, isLive } from '../api.js'
+import { stadiumInfo } from '../data/stadiums.js'
+
+async function shareMatch(m, group) {
+  const played = m.hs !== null
+  const score = played ? `${m.hs}-${m.as}` : 'vs'
+  const when = played
+    ? (m.status === 'FT' ? 'Final' : `${m.clock || 'En juego'}`)
+    : new Date(m.ts + 'Z').toLocaleString('es', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  const text = `⚽ ${esName(m.home)} ${score} ${esName(m.away)} · ${when} · ${group ? `Grupo ${group}` : 'Eliminatoria'} — Fútbol Tracker M26`
+  const url = location.origin
+  try {
+    if (navigator.share) await navigator.share({ text: `${text}\n${url}` })
+    else {
+      await navigator.clipboard.writeText(`${text}\n${url}`)
+      return 'copiado'
+    }
+  } catch { /* usuario canceló */ }
+  return null
+}
 
 // adapta la cronología básica de TheSportsDB al formato de incidencias
 const timelineToIncident = (ev) => ({
@@ -31,6 +50,8 @@ function incidentIcon(it) {
 export default function MatchDetail({ m, allMatches = [], onClose }) {
   const [tab, setTab] = useState('stats')
   const [incidents, setIncidents] = useState(null)
+  const [matchStats, setMatchStats] = useState(null)
+  const [shared, setShared] = useState(false)
   const played = m.hs !== null && m.as !== null
   const live = isLive(m)
   const group = TEAM_GROUP[m.home] === TEAM_GROUP[m.away] ? TEAM_GROUP[m.home] : null
@@ -48,6 +69,9 @@ export default function MatchDetail({ m, allMatches = [], onClose }) {
         )
       })
       .catch(() => !cancel && setIncidents([]))
+    getMatchStats(m)
+      .then((rows) => !cancel && setMatchStats(rows))
+      .catch(() => {})
     return () => { cancel = true }
   }, [m.id, m.status, m.hs, m.as, played, live])
 
@@ -62,6 +86,16 @@ export default function MatchDetail({ m, allMatches = [], onClose }) {
     <div className="overlay" onClick={onClose}>
       <div className="sheet" onClick={(e) => e.stopPropagation()}>
         <button className="sheet-close" onClick={onClose} aria-label="Cerrar">✕</button>
+        <button
+          className="sheet-share"
+          aria-label="Compartir"
+          onClick={async () => {
+            const r = await shareMatch(m, group)
+            if (r === 'copiado') { setShared(true); setTimeout(() => setShared(false), 2000) }
+          }}
+        >
+          {shared ? '✓' : '⤴'}
+        </button>
 
         <div className="sheet-head">
           <div className="sheet-team">
@@ -97,7 +131,7 @@ export default function MatchDetail({ m, allMatches = [], onClose }) {
 
         <div className="sheet-body">
           {tab === 'stats' ? (
-            <StatsTab m={m} group={group} allMatches={allMatches} incidents={incidents} played={played} live={live} />
+            <StatsTab m={m} group={group} allMatches={allMatches} incidents={incidents} matchStats={matchStats} played={played} live={live} />
           ) : (
             <LineupsTab m={m} />
           )}
@@ -107,7 +141,26 @@ export default function MatchDetail({ m, allMatches = [], onClose }) {
   )
 }
 
-function StatsTab({ m, group, allMatches, incidents, played, live }) {
+function StatBar({ row }) {
+  const h = parseFloat(row.home) || 0
+  const a = parseFloat(row.away) || 0
+  const total = h + a || 1
+  return (
+    <div className="statbar">
+      <span className="statbar-val">{row.home}</span>
+      <div className="statbar-mid">
+        <span className="statbar-label">{row.label}</span>
+        <div className="statbar-track">
+          <div className="statbar-fill home" style={{ width: `${(h / total) * 100}%` }} />
+          <div className="statbar-fill away" style={{ width: `${(a / total) * 100}%` }} />
+        </div>
+      </div>
+      <span className="statbar-val">{row.away}</span>
+    </div>
+  )
+}
+
+function StatsTab({ m, group, allMatches, incidents, matchStats, played, live }) {
   const prob = winProbability(m.home, m.away)
   const standings = group ? computeStandings(allMatches)[group] : null
 
@@ -125,6 +178,17 @@ function StatsTab({ m, group, allMatches, incidents, played, live }) {
         <div className="prob-seg away" style={{ width: `${prob.away}%` }} />
       </div>
       <p className="muted small">Estimación según rating de cada selección.</p>
+
+      {(played || live) && matchStats && (
+        <>
+          <h4 className="sheet-section">Cara a cara</h4>
+          <div className="statbar-head">
+            <span>{esName(m.home)}</span>
+            <span>{esName(m.away)}</span>
+          </div>
+          {matchStats.map((row) => <StatBar key={row.label} row={row} />)}
+        </>
+      )}
 
       {(played || live) && incidents && incidents.length > 0 && (
         <>
@@ -183,7 +247,13 @@ function StatsTab({ m, group, allMatches, incidents, played, live }) {
       )}
 
       <p className="venue-line">
-        <span className="muted">Lugar:</span> {m.venue}{m.country ? `, ${m.country}` : ''}
+        <span className="muted">Lugar:</span> {m.venue}
+        {(() => {
+          const info = stadiumInfo(m.venue)
+          return info
+            ? ` · ${info.city} · ~${info.capacity} espectadores`
+            : m.country ? `, ${m.country}` : ''
+        })()}
       </p>
     </>
   )

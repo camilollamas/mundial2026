@@ -654,6 +654,186 @@ tr.maybe td:first-child { box-shadow: inset 3px 0 0 var(--warn); }
   .seg { font-size: 11.5px; padding: 9px 4px; }
 }
 
+/* ---------- banner de selección favorita ---------- */
+.fav-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  margin-bottom: var(--gap-lg);
+  box-shadow: var(--shadow-card);
+}
+.fav-banner.fav-live { border-left-color: var(--live); }
+.fav-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.fav-name {
+  font-weight: 800;
+  font-size: 14px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.fav-pos {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary-strong);
+  background: var(--primary-soft);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+}
+.fav-next { font-size: 12.5px; color: var(--text-secondary); font-weight: 500; }
+.fav-next.live-text { color: var(--live); font-weight: 700; }
+
+/* estrella de favorito en tiles de equipos */
+.team-tile { position: relative; }
+.fav-star {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 15px;
+  opacity: 0.45;
+  cursor: pointer;
+  transition: var(--ease);
+}
+.fav-star:hover { opacity: 1; transform: scale(1.15); }
+.fav-star.active { opacity: 1; }
+
+/* buscador de jugadores */
+.search-input {
+  width: 100%;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 11px 16px;
+  font-size: 14px;
+  font-family: inherit;
+  margin-bottom: var(--gap-lg);
+  box-shadow: var(--shadow-card);
+}
+.search-input:focus { outline: 2px solid var(--primary); border-color: transparent; }
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 4px;
+  border: none;
+  border-top: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.search-row:first-of-type { border-top: none; }
+.search-row:hover { background: var(--surface-2); }
+
+/* chips de clasificación */
+.q-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 800;
+  margin-left: 6px;
+  flex-shrink: 0;
+}
+.q-chip.in { background: var(--primary-soft); color: var(--primary-strong); }
+.q-chip.out { background: var(--surface-2); color: var(--text-secondary); }
+
+/* cuenta regresiva */
+.countdown { margin: 8px 0 0; font-size: 14px; }
+.countdown strong { color: var(--primary-strong); }
+
+/* cara a cara (boxscore) */
+.statbar-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+.statbar {
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+}
+.statbar-val {
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.statbar-mid { display: flex; flex-direction: column; gap: 4px; }
+.statbar-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+}
+.statbar-track {
+  display: flex;
+  gap: 3px;
+  height: 6px;
+}
+.statbar-fill { border-radius: 3px; transition: var(--ease); }
+.statbar-fill.home { background: linear-gradient(90deg, var(--primary), #14b8a6); margin-left: auto; }
+.statbar-fill.away { background: var(--border-strong); }
+
+/* compartir en el detalle */
+.sheet-share {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  font-size: 15px;
+  cursor: pointer;
+  transition: var(--ease);
+  z-index: 1;
+}
+.sheet-share:hover { background: var(--border); color: var(--text); }
+
+/* mapa del cuadro */
+.bracket-map-wrap {
+  overflow-x: auto;
+  margin-bottom: var(--gap-lg);
+  padding: var(--gap-md);
+}
+.bm-label {
+  font-size: 11px;
+  font-weight: 700;
+  fill: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.bm-slot {
+  fill: var(--surface-2);
+  stroke: var(--border);
+  stroke-dasharray: 4 3;
+}
+.bm-slot.filled { fill: var(--surface); stroke: var(--border-strong); stroke-dasharray: none; }
+.bm-line { fill: none; stroke: var(--border); stroke-width: 1.5; }
+.bm-tbd { font-size: 11px; fill: var(--text-secondary); }
+.bm-score { font-size: 10px; font-weight: 700; fill: var(--text); }
+
 /* llaves: etapas apiladas con scroll vertical */
 .bracket-stack {
   display: flex;

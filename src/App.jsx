@@ -14,6 +14,7 @@ import Stats from './components/Stats.jsx'
 import Squads from './components/Squads.jsx'
 import UpdateToast from './components/UpdateToast.jsx'
 import News from './components/News.jsx'
+import FavBanner from './components/FavBanner.jsx'
 
 const TABS = [
   { key: 'fixture', label: 'Fixture', icon: '📅' },
@@ -38,6 +39,11 @@ export default function App() {
       .querySelector('meta[name="theme-color"]')
       ?.setAttribute('content', dark ? '#0d1424' : '#eef1f6')
   }, [dark])
+  const [fav, setFav] = useState(() => localStorage.getItem('m26:fav') || null)
+  useEffect(() => {
+    if (fav) localStorage.setItem('m26:fav', fav)
+    else localStorage.removeItem('m26:fav')
+  }, [fav])
   const [groupMatches, setGroupMatches] = useState([])
   const [koMatches, setKoMatches] = useState([])
   const [liveData, setLiveData] = useState(false)
@@ -125,11 +131,12 @@ export default function App() {
       </header>
 
       <main className="content">
+        {tab !== 'news' && <FavBanner fav={fav} matches={allMatches} />}
         {tab === 'fixture' && <Fixture matches={allMatches} />}
         {tab === 'groups' && <Groups matches={groupMatches} />}
         {tab === 'bracket' && <Bracket matches={koMatches} groupMatches={groupMatches} />}
         {tab === 'stats' && <Stats matches={allMatches} />}
-        {tab === 'squads' && <Squads />}
+        {tab === 'squads' && <Squads fav={fav} setFav={setFav} />}
         {tab === 'news' && <News />}
       </main>
 

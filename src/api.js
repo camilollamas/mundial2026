@@ -129,16 +129,55 @@ async function findEspnEvent(m) {
   )
 }
 
-// Incidencias completas del partido en español (goles, tarjetas, cambios,
-// pausas, VAR, etc.) desde keyEvents de ESPN. null si no hay datos.
-export async function getIncidents(m) {
+// Resumen completo del partido en español (compartido por incidencias y stats).
+async function fetchSummary(m) {
   const ev = await findEspnEvent(m)
   if (!ev) return null
-  const sum = await fetchJSON(
+  return fetchJSON(
     `${ESPN}/summary?event=${ev.id}&lang=es&region=mx`,
     `espninc${ev.id}`,
     isFinished(m) ? 3_600_000 : 45_000
   )
+}
+
+// Estadísticas comparadas del partido (posesión, tiros, faltas...) del boxscore.
+const STAT_KEYS = [
+  ['possessionPct', 'Posesión %'],
+  ['totalShots', 'Tiros'],
+  ['shotsOnTarget', 'Tiros al arco'],
+  ['wonCorners', 'Tiros de esquina'],
+  ['foulsCommitted', 'Faltas'],
+  ['offsides', 'Fueras de lugar'],
+  ['saves', 'Atajadas'],
+  ['yellowCards', 'Amarillas'],
+  ['redCards', 'Rojas'],
+]
+
+export async function getMatchStats(m) {
+  const sum = await fetchSummary(m)
+  const teams = sum?.boxscore?.teams
+  if (!teams || teams.length !== 2) return null
+  // identificamos cada lado por homeAway (los nombres vienen traducidos)
+  const bySide = {}
+  for (const t of teams) {
+    const stats = {}
+    for (const s of t.statistics || []) stats[s.name] = s.displayValue
+    bySide[t.homeAway] = stats
+  }
+  const h = bySide.home
+  const a = bySide.away
+  if (!h || !a) return null
+  const rows = STAT_KEYS
+    .filter(([k]) => h[k] !== undefined && a[k] !== undefined)
+    .map(([k, label]) => ({ label, home: h[k], away: a[k] }))
+  return rows.length ? rows : null
+}
+
+// Incidencias completas del partido en español (goles, tarjetas, cambios,
+// pausas, VAR, etc.) desde keyEvents de ESPN. null si no hay datos.
+export async function getIncidents(m) {
+  const sum = await fetchSummary(m)
+  if (!sum) return null
   const raw = (sum.keyEvents || []).map((k) => ({
     min: k.clock?.displayValue || '',
     type: k.type?.text || '',

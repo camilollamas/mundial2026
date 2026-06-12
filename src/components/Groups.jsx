@@ -1,16 +1,19 @@
 import { useMemo } from 'react'
-import { computeStandings, bestThirds } from '../standings.js'
+import { computeStandings, bestThirds, qualificationOutlook } from '../standings.js'
 import { GROUPS, esName } from '../data/groups.js'
 import { flag } from '../data/flags.js'
 
 export default function Groups({ matches }) {
   const standings = useMemo(() => computeStandings(matches), [matches])
   const thirds = useMemo(() => bestThirds(standings), [standings])
+  const outlook = useMemo(() => qualificationOutlook(matches), [matches])
 
   return (
     <section>
       <p className="hint">
         Avanzan a dieciseisavos los 2 primeros de cada grupo y los 8 mejores terceros.
+        Cuando la matemática lo confirme verás <span className="q-chip in">✓</span> (top-2
+        asegurado) o <span className="q-chip out">↓</span> (sin opción de top-2).
       </p>
       <div className="groups-grid">
         {Object.keys(GROUPS).map((g) => (
@@ -32,6 +35,12 @@ export default function Groups({ matches }) {
                       <img src={flag(row.team)} alt="" className="badge sm" loading="lazy" />
                       {esName(row.team)}
                       {row.live && <span className="live-mini" title="Jugando ahora" />}
+                      {outlook[row.team] === 'in' && (
+                        <span className="q-chip in" title="Top-2 asegurado pase lo que pase">✓</span>
+                      )}
+                      {outlook[row.team] === 'out' && (
+                        <span className="q-chip out" title="Sin opción de top-2; puede aspirar a mejor tercero">↓</span>
+                      )}
                     </td>
                     <td>{row.pj}</td><td>{row.g}</td><td>{row.e}</td><td>{row.p}</td>
                     <td>{row.gf}</td><td>{row.gc}</td>

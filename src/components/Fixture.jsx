@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import MatchCard from './MatchCard.jsx'
 import { GROUPS, TEAM_GROUP, esName } from '../data/groups.js'
 import { isFinished, isLive } from '../api.js'
@@ -14,6 +14,25 @@ const toLocalISO = (d) =>
 
 // fecha del partido en la zona horaria del usuario (el kickoff se guarda en UTC)
 const matchLocalDate = (m) => toLocalISO(new Date(m.ts + 'Z'))
+
+// cuenta regresiva al próximo partido (se refresca cada 30 s)
+function NextCountdown({ m }) {
+  const [now, setNow] = useState(Date.now())
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 30_000)
+    return () => clearInterval(id)
+  }, [])
+  const mins = Math.max(0, Math.floor((new Date(m.ts + 'Z').getTime() - now) / 60000))
+  const d = Math.floor(mins / 1440)
+  const h = Math.floor((mins % 1440) / 60)
+  const mm = mins % 60
+  const txt = d > 0 ? `${d}d ${h}h` : h > 0 ? `${h}h ${mm}m` : `${mm} min`
+  return (
+    <p className="countdown">
+      ⏳ Próximo: <strong>{esName(m.home)} vs {esName(m.away)}</strong> en <strong>{txt}</strong>
+    </p>
+  )
+}
 
 export default function Fixture({ matches }) {
   const [group, setGroup] = useState('all')
@@ -87,7 +106,10 @@ export default function Fixture({ matches }) {
       </div>
 
       {resolved === 'live' && live.length === 0 && (
-        <p className="muted center">No hay partidos en juego en este momento.</p>
+        <div className="card center-card">
+          <p className="muted">No hay partidos en juego en este momento.</p>
+          {upcoming[0] && <NextCountdown m={upcoming[0]} />}
+        </div>
       )}
 
       {byDate.map(([date, list]) => (
