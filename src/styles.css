@@ -272,8 +272,8 @@ body {
   bottom: 0; left: 0; right: 0;
   display: flex;
   justify-content: center;
-  gap: 6px;
-  padding: 10px max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-bottom));
+  gap: 2px;
+  padding: 10px max(6px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-bottom));
   background: var(--surface-glass);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -283,12 +283,12 @@ body {
 
 .tab {
   flex: 1;
-  max-width: 120px;
+  max-width: 110px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  padding: 9px 4px;
+  padding: 9px 2px;
   border: none;
   border-radius: var(--radius-sm);
   background: transparent;
@@ -304,7 +304,12 @@ body {
   color: var(--primary-strong);
   background: var(--primary-soft);
 }
-.tab-icon { font-size: 19px; }
+.tab-icon { font-size: 18px; }
+
+@media (max-width: 460px) {
+  .tab { font-size: 9.5px; }
+  .tab-icon { font-size: 17px; }
+}
 
 /* ---------- partidos ---------- */
 .match {
@@ -810,6 +815,38 @@ tr.maybe td:first-child { box-shadow: inset 3px 0 0 var(--warn); }
   z-index: 1;
 }
 .sheet-share:hover { background: var(--border); color: var(--text); }
+
+/* historial cara a cara */
+.h2h-list { display: flex; flex-direction: column; }
+.h2h-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+}
+.h2h-row:first-child { border-top: none; }
+.h2h-year {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.h2h-teams { min-width: 0; }
+.h2h-teams strong { color: var(--primary-strong); padding: 0 2px; }
+.h2h-comp {
+  font-size: 10px;
+  text-align: right;
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* botón "ver todo" en Hoy */
+.home-all { width: 100%; margin-top: var(--gap-lg); }
 
 /* tarjetas de cruce proyectado */
 .proj-match { cursor: default; }

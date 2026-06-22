@@ -16,8 +16,10 @@ import Squads from './components/Squads.jsx'
 import UpdateToast from './components/UpdateToast.jsx'
 import News from './components/News.jsx'
 import FavBanner from './components/FavBanner.jsx'
+import Home from './components/Home.jsx'
 
 const TABS = [
+  { key: 'home', label: 'Hoy', icon: '🏠' },
   { key: 'fixture', label: 'Fixture', icon: '📅' },
   { key: 'groups', label: 'Grupos', icon: '🏟️' },
   { key: 'bracket', label: 'Llaves', icon: '🏆' },
@@ -27,7 +29,7 @@ const TABS = [
 ]
 
 export default function App() {
-  const [tab, setTab] = useState('fixture')
+  const [tab, setTab] = useState('home')
   const [dark, setDark] = useState(
     () => document.documentElement.dataset.theme === 'dark'
   )
@@ -142,6 +144,7 @@ export default function App() {
 
       <main className="content">
         {tab !== 'news' && <FavBanner fav={fav} matches={allMatches} />}
+        {tab === 'home' && <Home matches={allMatches} setTab={setTab} />}
         {tab === 'fixture' && <Fixture matches={allMatches} />}
         {tab === 'groups' && <Groups matches={groupMatches} />}
         {tab === 'bracket' && <Bracket matches={koMatches} groupMatches={groupMatches} />}

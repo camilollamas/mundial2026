@@ -237,6 +237,35 @@ export async function getMatchStats(m) {
   return rows
 }
 
+// Historial de enfrentamientos directos entre las dos selecciones (ESPN).
+export async function getH2H(m) {
+  const ck = `h2h${m.id}`
+  const cached = cacheGet(ck)
+  if (cached) return cached
+  const sum = await fetchSummary(m)
+  const g = sum?.headToHeadGames?.[0]
+  if (!g || !(g.events || []).length) return null
+  const teamId = String(g.team?.id)
+  const teamName = g.team?.displayName
+  const oppName = (e) => e.opponent?.displayName || e.opponent?.abbreviation || ''
+  const rows = g.events.map((e) => {
+    const teamIsHome = String(e.homeTeamId) === teamId
+    return {
+      year: (e.gameDate || '').slice(0, 4),
+      date: e.gameDate,
+      comp: e.leagueName || e.competitionName || '',
+      home: teamIsHome ? teamName : oppName(e),
+      away: teamIsHome ? oppName(e) : teamName,
+      hs: e.homeTeamScore,
+      as: e.awayTeamScore,
+    }
+  })
+  // más reciente primero
+  rows.sort((a, b) => (a.date < b.date ? 1 : -1))
+  cacheSet(ck, rows, 30 * 24 * 3600 * 1000)
+  return rows
+}
+
 // Incidencias completas del partido en español (goles, tarjetas, cambios,
 // pausas, VAR, etc.) desde keyEvents de ESPN. null si no hay datos.
 export async function getIncidents(m) {

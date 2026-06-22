@@ -3,7 +3,7 @@ import { TEAM_GROUP, esName } from '../data/groups.js'
 import { flag } from '../data/flags.js'
 import { winProbability } from '../data/ratings.js'
 import { computeStandings } from '../standings.js'
-import { getTimeline, getIncidents, getLineups, getMatchStats, isLive } from '../api.js'
+import { getTimeline, getIncidents, getLineups, getMatchStats, getH2H, isLive } from '../api.js'
 import { stadiumInfo } from '../data/stadiums.js'
 
 async function shareMatch(m, group) {
@@ -51,6 +51,7 @@ export default function MatchDetail({ m, allMatches = [], onClose }) {
   const [tab, setTab] = useState('stats')
   const [incidents, setIncidents] = useState(null)
   const [matchStats, setMatchStats] = useState(null)
+  const [h2h, setH2h] = useState(null)
   const [shared, setShared] = useState(false)
   const played = m.hs !== null && m.as !== null
   const live = isLive(m)
@@ -74,6 +75,13 @@ export default function MatchDetail({ m, allMatches = [], onClose }) {
       .catch(() => {})
     return () => { cancel = true }
   }, [m.id, m.status, m.hs, m.as, played, live])
+
+  // historial cara a cara: útil siempre, sobre todo en la previa
+  useEffect(() => {
+    let cancel = false
+    getH2H(m).then((rows) => !cancel && setH2h(rows)).catch(() => {})
+    return () => { cancel = true }
+  }, [m.id])
 
   // cerrar con Escape
   useEffect(() => {
@@ -138,7 +146,7 @@ export default function MatchDetail({ m, allMatches = [], onClose }) {
 
         <div className="sheet-body">
           {tab === 'stats' ? (
-            <StatsTab m={m} group={group} allMatches={allMatches} incidents={incidents} matchStats={matchStats} played={played} live={live} />
+            <StatsTab m={m} group={group} allMatches={allMatches} incidents={incidents} matchStats={matchStats} h2h={h2h} played={played} live={live} />
           ) : (
             <LineupsTab m={m} />
           )}
@@ -167,7 +175,7 @@ function StatBar({ row }) {
   )
 }
 
-function StatsTab({ m, group, allMatches, incidents, matchStats, played, live }) {
+function StatsTab({ m, group, allMatches, incidents, matchStats, h2h, played, live }) {
   const prob = winProbability(m.home, m.away)
   const standings = group ? computeStandings(allMatches)[group] : null
 
@@ -249,6 +257,23 @@ function StatsTab({ m, group, allMatches, incidents, matchStats, played, live })
           <div className="legend">
             <span className="legend-item"><span className="legend-dot qualify-dot" /> Fase de eliminación directa</span>
             <span className="legend-item"><span className="legend-dot maybe-dot" /> Posible mejor tercero</span>
+          </div>
+        </>
+      )}
+
+      {h2h && h2h.length > 0 && (
+        <>
+          <h4 className="sheet-section">Historial · últimos enfrentamientos</h4>
+          <div className="h2h-list">
+            {h2h.slice(0, 6).map((g, i) => (
+              <div key={i} className="h2h-row">
+                <span className="h2h-year">{g.year}</span>
+                <span className="h2h-teams">
+                  {g.home} <strong>{g.hs}-{g.as}</strong> {g.away}
+                </span>
+                <span className="h2h-comp muted">{g.comp}</span>
+              </div>
+            ))}
           </div>
         </>
       )}
