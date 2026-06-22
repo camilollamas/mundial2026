@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import MatchCard from './MatchCard.jsx'
 import { KO_STAGES, esName } from '../data/groups.js'
-import { flag } from '../data/flags.js'
+import { flag, teamCode } from '../data/flags.js'
 import { isFinished } from '../api.js'
 import { computeStandings, bestThirds } from '../standings.js'
 import { projectR32 } from '../data/bracket.js'
@@ -15,10 +15,10 @@ const STAGE_DATES = {
 function BracketMap({ matches, projected }) {
   const stages = ['r32', 'r16', 'qf', 'sf', 'final']
   const labels = { r32: '16avos', r16: 'Octavos', qf: 'Cuartos', sf: 'Semis', final: 'Final' }
-  const slotW = 64
-  const slotH = 30
+  const slotW = 104
+  const slotH = 32
   const hGap = 30
-  const vUnit = 40
+  const vUnit = 42
   const top = 26
 
   const byStage = Object.fromEntries(
@@ -61,10 +61,12 @@ function BracketMap({ matches, projected }) {
                   />
                   {m && (m.home || m.away) ? (
                     <>
-                      {m.home && <image href={flag(m.home)} x={x + 5} y={cy - 12} width="16" height="12" />}
-                      {m.away && <image href={flag(m.away)} x={x + 5} y={cy + 1} width="16" height="12" />}
-                      <text x={x + 27} y={cy - 2.5} className="bm-score">{m.hs ?? ''}</text>
-                      <text x={x + 27} y={cy + 10.5} className="bm-score">{m.as ?? ''}</text>
+                      {m.home && <image href={flag(m.home)} x={x + 6} y={cy - 13} width="17" height="12.75" />}
+                      <text x={x + 28} y={cy - 3.5} className="bm-code">{teamCode(m.home)}</text>
+                      <text x={x + slotW - 7} y={cy - 3.5} className="bm-score" textAnchor="end">{m.hs ?? ''}</text>
+                      {m.away && <image href={flag(m.away)} x={x + 6} y={cy + 1.5} width="17" height="12.75" />}
+                      <text x={x + 28} y={cy + 11} className="bm-code">{teamCode(m.away)}</text>
+                      <text x={x + slotW - 7} y={cy + 11} className="bm-score" textAnchor="end">{m.as ?? ''}</text>
                     </>
                   ) : (
                     <text x={x + slotW / 2} y={cy + 4} className="bm-tbd" textAnchor="middle">—</text>

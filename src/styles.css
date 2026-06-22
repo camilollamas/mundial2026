@@ -864,7 +864,8 @@ tr.maybe td:first-child { box-shadow: inset 3px 0 0 var(--warn); }
 .bm-slot.filled { fill: var(--surface); stroke: var(--border-strong); stroke-dasharray: none; }
 .bm-line { fill: none; stroke: var(--border); stroke-width: 1.5; }
 .bm-tbd { font-size: 11px; fill: var(--text-secondary); }
-.bm-score { font-size: 10px; font-weight: 700; fill: var(--text); }
+.bm-score { font-size: 11px; font-weight: 700; fill: var(--text); }
+.bm-code { font-size: 11px; font-weight: 700; fill: var(--text); letter-spacing: 0.3px; }
 
 /* llaves: etapas apiladas con scroll vertical */
 .bracket-stack {
