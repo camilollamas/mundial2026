@@ -25,15 +25,22 @@ function cacheSet(key, data, ttlMs) {
   }
 }
 
-async function fetchJSON(path, cacheKey, ttlMs) {
+async function fetchJSON(path, cacheKey, ttlMs, timeoutMs = 8000) {
   const cached = cacheKey ? cacheGet(cacheKey) : null
   if (cached) return cached
   const url = path.startsWith('http') ? path : `${BASE}/${path}`
-  const res = await fetch(url)
-  if (!res.ok) throw new Error(`API ${res.status}`)
-  const data = await res.json()
-  if (cacheKey) cacheSet(cacheKey, data, ttlMs)
-  return data
+  // un endpoint colgado no debe congelar la app: abortamos a los 8 s
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs)
+  try {
+    const res = await fetch(url, { signal: ctrl.signal })
+    if (!res.ok) throw new Error(`API ${res.status}`)
+    const data = await res.json()
+    if (cacheKey) cacheSet(cacheKey, data, ttlMs)
+    return data
+  } finally {
+    clearTimeout(timer)
+  }
 }
 
 const slimEvent = (e) => ({
@@ -55,7 +62,25 @@ const slimEvent = (e) => ({
   stage: stageForDate(e.dateEvent),
 })
 
-// Fase de grupos: jornadas 1-3 (24 partidos cada una). Semilla local como respaldo.
+// Último set bueno de partidos de grupo (persistente, sin caducar) para
+// pintar la app al instante al abrir y como respaldo si la red falla.
+const SNAP_KEY = 'groupsSnapshot'
+
+export function cachedGroupMatches() {
+  try {
+    const raw = localStorage.getItem('m26:' + SNAP_KEY)
+    if (raw) {
+      const { data } = JSON.parse(raw)
+      if (Array.isArray(data) && data.length) return data
+    }
+  } catch {
+    /* sin localStorage */
+  }
+  return seedMatches.map((m) => ({ ...m, stage: null }))
+}
+
+// Fase de grupos: jornadas 1-3 (24 partidos cada una). Devuelve si los datos
+// vinieron de la red (online) o de respaldo local.
 export async function getGroupMatches() {
   try {
     const rounds = await Promise.all(
@@ -64,11 +89,15 @@ export async function getGroupMatches() {
       )
     )
     const events = rounds.flatMap((r) => r.events || [])
-    if (events.length >= 72) return { matches: events.map(slimEvent), live: true }
+    if (events.length >= 72) {
+      const matches = events.map(slimEvent)
+      cacheSet(SNAP_KEY, matches, 365 * 24 * 3600 * 1000)
+      return { matches, online: true }
+    }
   } catch {
-    /* sin conexión o API caída: usar semilla */
+    /* sin conexión o API caída: usar el último snapshot o la semilla */
   }
-  return { matches: seedMatches.map((m) => ({ ...m, stage: null })), live: false }
+  return { matches: cachedGroupMatches(), online: false }
 }
 
 // Eliminatorias: TheSportsDB crea los eventos cuando se conocen los cruces.

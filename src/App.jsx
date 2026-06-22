@@ -5,6 +5,7 @@ import {
   getLiveScores,
   mergeLiveScores,
   inLiveWindow,
+  cachedGroupMatches,
   isLive,
 } from './api.js'
 import Fixture from './components/Fixture.jsx'
@@ -44,26 +45,24 @@ export default function App() {
     if (fav) localStorage.setItem('m26:fav', fav)
     else localStorage.removeItem('m26:fav')
   }, [fav])
-  const [groupMatches, setGroupMatches] = useState([])
+  // arranque instantáneo: se pinta el último set conocido sin esperar a la red
+  const [groupMatches, setGroupMatches] = useState(cachedGroupMatches)
   const [koMatches, setKoMatches] = useState([])
-  const [liveData, setLiveData] = useState(false)
+  const [online, setOnline] = useState(navigator.onLine)
   const [updatedAt, setUpdatedAt] = useState(null)
 
   async function refresh() {
-    const { matches, live } = await getGroupMatches()
-    let merged = matches
+    // los marcadores en vivo (ESPN) se piden en paralelo, no esperan a los grupos
+    const groupsP = getGroupMatches()
+    const liveP = getLiveScores().catch(() => null)
+    const { matches, online: net } = await groupsP
+    setOnline(net || navigator.onLine)
+
     let liveScores = null
-    // ventana amplia: los horarios de TheSportsDB a veces difieren de los reales
     if (inLiveWindow(matches, 8 * 3_600_000, 4 * 3_600_000)) {
-      try {
-        liveScores = await getLiveScores()
-        merged = mergeLiveScores(matches, liveScores)
-      } catch {
-        /* sin marcador en vivo: se mantienen los datos base */
-      }
+      liveScores = await liveP
     }
-    setGroupMatches(merged)
-    setLiveData(live)
+    setGroupMatches(liveScores ? mergeLiveScores(matches, liveScores) : matches)
     setUpdatedAt(new Date())
     try {
       let ko = await getKnockoutMatches()
@@ -76,6 +75,17 @@ export default function App() {
 
   useEffect(() => {
     refresh()
+    const onNet = () => setOnline(navigator.onLine)
+    window.addEventListener('online', onNet)
+    window.addEventListener('offline', onNet)
+    // al volver a primer plano (móvil), refrescar de inmediato
+    const onVisible = () => document.visibilityState === 'visible' && refresh()
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      window.removeEventListener('online', onNet)
+      window.removeEventListener('offline', onNet)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
   }, [])
 
   // Auto-actualiza cada 30 s en ventana de partido, cada 5 min si no.
@@ -109,9 +119,9 @@ export default function App() {
             {anyLive ? (
               <span className="live-dot">EN VIVO</span>
             ) : (
-              <span className={`status-pill ${liveData ? 'online' : 'offline'}`}>
+              <span className={`status-pill ${online ? 'online' : 'offline'}`}>
                 <span className="status-dot" />
-                {liveData ? 'En línea' : 'Offline'}
+                {online ? 'En línea' : 'Sin conexión'}
               </span>
             )}
             {updatedAt && (
