@@ -100,23 +100,27 @@ export async function getGroupMatches() {
   return { matches: cachedGroupMatches(), online: false }
 }
 
-// Eliminatorias: TheSportsDB crea los eventos cuando se conocen los cruces.
-// Sondeamos los números de ronda que usa para copas y clasificamos por fecha.
-const KO_ROUND_IDS = [4, 5, 6, 7, 116, 125, 150, 160, 200]
-
+// Eliminatorias: el plan gratuito de TheSportsDB no expone los rounds de
+// eliminación (los marca como "r32" string y su endpoint solo acepta números),
+// así que las traemos del scoreboard de ESPN para todo el rango de la fase
+// final (28 jun – 19 jul), con marcador y estado en vivo incluidos.
 export async function getKnockoutMatches() {
-  const results = await Promise.allSettled(
-    KO_ROUND_IDS.map((r) =>
-      fetchJSON(`eventsround.php?id=${LEAGUE}&r=${r}&s=${SEASON}`, `ko${r}`, 300_000)
-    )
+  const data = await fetchJSON(
+    `${ESPN}/scoreboard?dates=20260628-20260719`,
+    'koESPN',
+    25_000
   )
-  const events = results
-    .filter((r) => r.status === 'fulfilled')
-    .flatMap((r) => r.value.events || [])
+  // ESPN lista los cruces futuros con placeholders ("Round of 32 X Winner");
+  // solo mostramos los que ya tienen las dos selecciones definidas.
+  const isPlaceholder = (n) => /winner|loser|round of|tbd|to be|runner/i.test(n || '')
   const seen = new Set()
-  return events
-    .map(slimEvent)
-    .filter((m) => m.stage && !seen.has(m.id) && seen.add(m.id))
+  return (data.events || [])
+    .map(espnEventToMatch)
+    .filter(
+      (m) =>
+        m && m.stage && !isPlaceholder(m.home) && !isPlaceholder(m.away) &&
+        !seen.has(m.id) && seen.add(m.id)
+    )
     .sort((a, b) => (a.ts < b.ts ? -1 : 1))
 }
 
@@ -143,6 +147,63 @@ const normName = (s) =>
   (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
 
 const espnName = (team) => normName(ESPN_NAMES[team] || team)
+
+// inverso: displayName de ESPN -> nuestro nombre interno (TheSportsDB)
+const OURS_BY_ESPN = Object.fromEntries(
+  Object.entries(ESPN_NAMES).map(([ours, espn]) => [normName(espn), ours])
+)
+const ourName = (espnDisplay) => OURS_BY_ESPN[normName(espnDisplay)] || espnDisplay
+
+// estado de un evento de ESPN -> nuestro código de status + reloj
+function espnState(e) {
+  const st = e.status || {}
+  const state = st.type?.state
+  const name = st.type?.name || ''
+  const period = st.period || 0
+  if (state === 'pre') return { status: 'NS', clock: '' }
+  if (state === 'post') {
+    if (name.includes('PEN') || name.includes('SHOOTOUT')) return { status: 'PEN', clock: '' }
+    if (name.includes('EXTRA') || name.includes('OVERTIME') || name.includes('AET'))
+      return { status: 'AET', clock: '' }
+    return { status: 'FT', clock: '' }
+  }
+  if (name.includes('HALFTIME')) return { status: 'HT', clock: '' }
+  const status = period <= 1 ? '1H' : period === 2 ? '2H' : 'ET'
+  return { status, clock: st.displayClock || '' }
+}
+
+// evento del scoreboard de ESPN -> nuestro formato de partido
+function espnEventToMatch(e) {
+  const c = e.competitions?.[0] || {}
+  const comp = c.competitors || []
+  const h = comp.find((x) => x.homeAway === 'home')
+  const a = comp.find((x) => x.homeAway === 'away')
+  if (!h || !a) return null
+  const home = ourName(h.team?.displayName)
+  const away = ourName(a.team?.displayName)
+  const date = (e.date || '').slice(0, 10)
+  const { status, clock } = espnState(e)
+  const played = status !== 'NS'
+  return {
+    id: 'espn' + e.id,
+    round: 0,
+    home,
+    away,
+    homeId: null,
+    awayId: null,
+    hs: played && h.score != null ? Number(h.score) : null,
+    as: played && a.score != null ? Number(a.score) : null,
+    ts: (e.date || '').replace(/Z$/, ''),
+    date,
+    venue: c.venue?.fullName || '',
+    country: c.venue?.address?.country || '',
+    hb: null,
+    ab: null,
+    status,
+    clock,
+    stage: stageForDate(date),
+  }
+}
 
 // Localiza el evento de ESPN correspondiente a un partido nuestro.
 // ESPN agrupa el scoreboard por fecha del Este de EE. UU., así que un partido
