@@ -172,6 +172,16 @@ function espnState(e) {
   return { status, clock: st.displayClock || '' }
 }
 
+// ESPN identifica la ronda con un slug fiable (mejor que adivinar por fecha)
+const SLUG_STAGE = {
+  'round-of-32': 'r32',
+  'round-of-16': 'r16',
+  quarterfinals: 'qf',
+  semifinals: 'sf',
+  '3rd-place-match': 'third',
+  final: 'final',
+}
+
 // evento del scoreboard de ESPN -> nuestro formato de partido
 function espnEventToMatch(e) {
   const c = e.competitions?.[0] || {}
@@ -201,7 +211,7 @@ function espnEventToMatch(e) {
     ab: null,
     status,
     clock,
-    stage: stageForDate(date),
+    stage: SLUG_STAGE[e.season?.slug] || stageForDate(date),
   }
 }
 
