@@ -35,7 +35,12 @@ export default function MatchCard({ m, allMatches = [] }) {
           </div>
           <div className="match-score">
             {played || live ? (
-              <span className={live ? 'score live' : 'score'}>{m.hs ?? 0} - {m.as ?? 0}</span>
+              <span className={live ? 'score live' : 'score'}>
+                {m.hs ?? 0} - {m.as ?? 0}
+                {m.status === 'PEN' && m.hp != null && (
+                  <small className="pens"> ({m.hp}-{m.ap} pen)</small>
+                )}
+              </span>
             ) : (
               <span className="score time">{kickoff(m)}</span>
             )}

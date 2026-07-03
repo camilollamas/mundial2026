@@ -203,6 +203,9 @@ function espnEventToMatch(e) {
     awayId: null,
     hs: played && h.score != null ? Number(h.score) : null,
     as: played && a.score != null ? Number(a.score) : null,
+    // penales: marcador de la tanda (solo si el partido fue a penales)
+    hp: status === 'PEN' && h.shootoutScore != null ? Number(h.shootoutScore) : null,
+    ap: status === 'PEN' && a.shootoutScore != null ? Number(a.shootoutScore) : null,
     ts: (e.date || '').replace(/Z$/, ''),
     date,
     venue: c.venue?.fullName || '',
