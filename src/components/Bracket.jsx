@@ -12,7 +12,10 @@ const STAGE_DATES = {
 }
 
 // Mapa visual del cuadro: columnas conectadas estilo TV, scroll horizontal.
-function BracketMap({ matches, projected }) {
+// homeOrder = 16 equipos "home" del cuadro oficial en orden de bracket (el lado
+// a de cada R32_SLOT es siempre 1º/2º exacto), usado para ordenar por adyacencia
+// real del cuadro y no por fecha (que cruzaba equipos incorrectos).
+function BracketMap({ matches, projected, homeOrder }) {
   const stages = ['r32', 'r16', 'qf', 'sf', 'final']
   const labels = { r32: '16avos', r16: 'Octavos', qf: 'Cuartos', sf: 'Semis', final: 'Final' }
   const slotW = 104
@@ -21,14 +24,34 @@ function BracketMap({ matches, projected }) {
   const vUnit = 42
   const top = 26
 
-  const byStage = Object.fromEntries(
+  const bySt = Object.fromEntries(
     stages.map((s) => [
       s,
       matches.filter((m) => m.stage === s).sort((a, b) => (a.ts < b.ts ? -1 : 1)),
     ])
   )
-  // si no hay dieciseisavos reales, usamos la proyección (orden de bracket)
-  if (byStage.r32.length === 0 && projected) byStage.r32 = projected
+
+  // coloca cada R32 real en su posición oficial (por el equipo home exacto) y
+  // guarda el rank de cada equipo para ordenar las rondas siguientes
+  const ordered32 = new Array(16).fill(null)
+  const rank = {}
+  for (const m of bySt.r32) {
+    const i = homeOrder.findIndex((h) => h && (h === m.home || h === m.away))
+    if (i >= 0 && !ordered32[i]) ordered32[i] = m
+  }
+  ordered32.forEach((m, i) => {
+    if (m) { rank[m.home] = i; rank[m.away] = i }
+  })
+  const byRank = (a, b) =>
+    Math.min(rank[a.home] ?? 99, rank[a.away] ?? 99) - Math.min(rank[b.home] ?? 99, rank[b.away] ?? 99)
+
+  const byStage = {
+    r32: bySt.r32.length ? ordered32 : projected || [],
+    r16: bySt.r16.slice().sort(byRank),
+    qf: bySt.qf.slice().sort(byRank),
+    sf: bySt.sf.slice().sort(byRank),
+    final: bySt.final,
+  }
 
   const centerY = (k, i) => top + vUnit * 2 ** k * (i + 0.5)
   const colX = (k) => k * (slotW + hGap)
@@ -115,12 +138,11 @@ export default function Bracket({ matches, groupMatches }) {
   const groupsDone = groupMatches.filter(isFinished).length
   const hasRealR32 = matches.some((m) => m.stage === 'r32')
 
-  // proyección en vivo de dieciseisavos desde las posiciones de grupo
-  const projected = useMemo(() => {
-    if (hasRealR32) return null
+  // proyección de dieciseisavos + orden oficial del cuadro (home exacto por slot)
+  const { projected, homeOrder } = useMemo(() => {
     const standings = computeStandings(groupMatches)
-    const thirds = bestThirds(standings)
-    return projectR32(standings, thirds)
+    const proj = projectR32(standings, bestThirds(standings))
+    return { projected: hasRealR32 ? null : proj, homeOrder: proj.map((p) => p.home) }
   }, [groupMatches, hasRealR32])
 
   return (
@@ -132,7 +154,7 @@ export default function Bracket({ matches, groupMatches }) {
           : ' Los cruces aparecen aquí automáticamente cuando se definen. Desliza el mapa →'}
       </p>
 
-      <BracketMap matches={matches} projected={projected} />
+      <BracketMap matches={matches} projected={projected} homeOrder={homeOrder} />
 
       {!hasRealR32 && projected && (
         <div className="stage-col">
