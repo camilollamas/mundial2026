@@ -1,21 +1,22 @@
-// Cuadro oficial de dieciseisavos del Mundial 2026 (partidos 73-88).
-// Cada slot es un ganador de grupo (W), un segundo (R) o un mejor tercero (3)
-// que puede provenir de uno de varios grupos (thirdFrom). Orden del array =
-// orden visual del bracket (cada par consecutivo alimenta unos octavos).
-// Fuente: cuadro oficial FIFA / Wikipedia "2026 FIFA World Cup knockout stage".
+// Cuadro oficial del Mundial 2026. Orden del array = orden visual del bracket:
+// pares consecutivos alimentan octavos, y esa adyacencia se propaga correcta a
+// cuartos/semis/final (verificado contra la estructura de ESPN: SF1 = QF de los
+// partidos 89·90 + 93·94; SF2 = 91·92 + 95·96). Cada slot es 1º (W), 2º (R) o
+// mejor tercero (3, con la lista de grupos posibles). NO reordenar sin re-validar
+// la adyacencia hasta la final.
 export const R32_SLOTS = [
   { match: 74, a: { t: 'W', g: 'E' }, b: { t: '3', from: ['A', 'B', 'C', 'D', 'F'] } },
   { match: 77, a: { t: 'W', g: 'I' }, b: { t: '3', from: ['C', 'D', 'F', 'G', 'H'] } },
   { match: 73, a: { t: 'R', g: 'A' }, b: { t: 'R', g: 'B' } },
   { match: 75, a: { t: 'W', g: 'F' }, b: { t: 'R', g: 'C' } },
-  { match: 76, a: { t: 'W', g: 'C' }, b: { t: 'R', g: 'F' } },
-  { match: 78, a: { t: 'R', g: 'E' }, b: { t: 'R', g: 'I' } },
-  { match: 79, a: { t: 'W', g: 'A' }, b: { t: '3', from: ['C', 'E', 'F', 'H', 'I'] } },
-  { match: 80, a: { t: 'W', g: 'L' }, b: { t: '3', from: ['E', 'H', 'I', 'J', 'K'] } },
   { match: 83, a: { t: 'R', g: 'K' }, b: { t: 'R', g: 'L' } },
   { match: 84, a: { t: 'W', g: 'H' }, b: { t: 'R', g: 'J' } },
   { match: 81, a: { t: 'W', g: 'D' }, b: { t: '3', from: ['B', 'E', 'F', 'I', 'J'] } },
   { match: 82, a: { t: 'W', g: 'G' }, b: { t: '3', from: ['A', 'E', 'H', 'I', 'J'] } },
+  { match: 76, a: { t: 'W', g: 'C' }, b: { t: 'R', g: 'F' } },
+  { match: 78, a: { t: 'R', g: 'E' }, b: { t: 'R', g: 'I' } },
+  { match: 79, a: { t: 'W', g: 'A' }, b: { t: '3', from: ['C', 'E', 'F', 'H', 'I'] } },
+  { match: 80, a: { t: 'W', g: 'L' }, b: { t: '3', from: ['E', 'H', 'I', 'J', 'K'] } },
   { match: 86, a: { t: 'W', g: 'J' }, b: { t: 'R', g: 'H' } },
   { match: 88, a: { t: 'R', g: 'D' }, b: { t: 'R', g: 'G' } },
   { match: 85, a: { t: 'W', g: 'B' }, b: { t: '3', from: ['E', 'F', 'G', 'I', 'J'] } },
